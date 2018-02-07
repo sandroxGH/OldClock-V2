@@ -1,6 +1,6 @@
 Old Clock V2.0
 ===================== 
-Controller borad for Odl train station clock 
+Controller board for Odl train station clock 
 
 
 Project preview
