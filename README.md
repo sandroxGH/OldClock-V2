@@ -5,9 +5,9 @@ Controller board for Odl train station clock
 
 Project preview
 =====================
-<img src="Pict/HAG.jpg" width="400">
+<img src="Pict/board.jpg" width="400">
 
-<img src="Pict/Frame1.jpg" width="400">
+<img src="Pict/clock.jpg" width="400">
 
 License and copyright
 =====================
