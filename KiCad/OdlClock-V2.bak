@@ -689,12 +689,6 @@ F 3 "" H 1975 1850 60  0001 C CNN
 	1    1975 1850
 	0    -1   -1   0   
 $EndComp
-Wire Wire Line
-	5225 2825 3075 2825
-Wire Wire Line
-	3075 2825 3075 2050
-Wire Wire Line
-	3075 2050 1975 2050
 $Comp
 L Q_PNP_CBE Q?
 U 1 1 5A8755B8

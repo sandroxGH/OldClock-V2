@@ -1,4 +1,4 @@
-update=18/12/2017 11:48:04
+update=mer 28 feb 2018 22:26:39 CET
 version=1
 last_client=kicad
 [pcbnew]
@@ -65,3 +65,5 @@ LibName33=Switch
 LibName34=Display
 LibName35=Relay
 LibName36=relays
+LibName37=nxp
+LibName38=dc-dc
