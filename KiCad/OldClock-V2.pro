@@ -1,4 +1,4 @@
-update=mer 28 feb 2018 22:26:39 CET
+update=mer 28 feb 2018 22:48:13 CET
 version=1
 last_client=kicad
 [pcbnew]
@@ -67,3 +67,13 @@ LibName35=Relay
 LibName36=relays
 LibName37=nxp
 LibName38=dc-dc
+[schematic_editor]
+version=1
+PageLayoutDescrFile=
+PlotDirectoryName=Plot/
+SubpartIdSeparator=0
+SubpartFirstId=65
+NetFmtName=
+SpiceForceRefPrefix=0
+SpiceUseNetNumbers=0
+LabSize=60
