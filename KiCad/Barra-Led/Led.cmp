@@ -1,0 +1,19 @@
+Cmp-Mod V01 Created by PcbNew   date = mer 21 feb 2018 21:21:00 CET
+
+BeginCmp
+TimeStamp = 5A8DFD8D
+Path = /5A8DCC68
+Reference = R1;
+ValeurCmp = R;
+IdModule  = Resistors_SMD:R_0603_HandSoldering;
+EndCmp
+
+BeginCmp
+TimeStamp = 5A8DFD7D
+Path = /5A8DCCDE
+Reference = D1;
+ValeurCmp = LED;
+IdModule  = LEDs:LED_PLCC_2835_Handsoldering;
+EndCmp
+
+EndListe

@@ -1,0 +1,222 @@
+## Footprint report - date Thu Feb 22 21:45:15 2018
+## Created by Pcbnew version kicad 4.0.5+dfsg1-4
+## Unit = inches, Angle = deg.
+
+$BeginDESCRIPTION
+
+$BOARD
+upper_left_corner  3.036063  3.616063
+lower_right_corner  8.503937  4.163937
+$EndBOARD
+
+$MODULE "D1"
+reference "D1"
+value "LED"
+footprint "Diodes_SMD:3528"
+attribut none
+position  4.657087  3.933268  orientation 0.00
+layer front
+$PAD "1"
+Shape Rett. Layer front
+position -0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rett. Layer front
+position  0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  D1
+
+$MODULE "D2"
+reference "D2"
+value "LED"
+footprint "Diodes_SMD:3528"
+attribut none
+position  4.107087  3.933268  orientation 0.00
+layer front
+$PAD "1"
+Shape Rett. Layer front
+position -0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rett. Layer front
+position  0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  D2
+
+$MODULE "D3"
+reference "D3"
+value "LED"
+footprint "Diodes_SMD:3528"
+attribut none
+position  3.557087  3.933268  orientation 0.00
+layer front
+$PAD "1"
+Shape Rett. Layer front
+position -0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rett. Layer front
+position  0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  D3
+
+$MODULE "D4"
+reference "D4"
+value "LED"
+footprint "Diodes_SMD:3528"
+attribut none
+position  5.207087  3.933268  orientation 180.00
+layer front
+$PAD "1"
+Shape Rett. Layer front
+position -0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rett. Layer front
+position  0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  D4
+
+$MODULE "D5"
+reference "D5"
+value "LED"
+footprint "Diodes_SMD:3528"
+attribut none
+position  5.757087  3.933268  orientation 180.00
+layer front
+$PAD "1"
+Shape Rett. Layer front
+position -0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rett. Layer front
+position  0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  D5
+
+$MODULE "D6"
+reference "D6"
+value "LED"
+footprint "Diodes_SMD:3528"
+attribut none
+position  6.307087  3.933268  orientation 180.00
+layer front
+$PAD "1"
+Shape Rett. Layer front
+position -0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rett. Layer front
+position  0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  D6
+
+$MODULE "D7"
+reference "D7"
+value "LED"
+footprint "Diodes_SMD:3528"
+attribut none
+position  6.857087  3.933268  orientation 180.00
+layer front
+$PAD "1"
+Shape Rett. Layer front
+position -0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rett. Layer front
+position  0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  D7
+
+$MODULE "D8"
+reference "D8"
+value "LED"
+footprint "Diodes_SMD:3528"
+attribut none
+position  7.407087  3.933268  orientation 180.00
+layer front
+$PAD "1"
+Shape Rett. Layer front
+position -0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rett. Layer front
+position  0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  D8
+
+$MODULE "D9"
+reference "D9"
+value "LED"
+footprint "Diodes_SMD:3528"
+attribut none
+position  7.957087  3.933268  orientation 180.00
+layer front
+$PAD "1"
+Shape Rett. Layer front
+position -0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rett. Layer front
+position  0.064961  0.000000  size  0.059055  0.118110  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  D9
+
+$MODULE "R1"
+reference "R1"
+value "R"
+footprint "Resistors_SMD:R_1210_HandSoldering"
+attribut smd
+position  4.907087  3.883268  orientation 270.00
+layer front
+$PAD "1"
+Shape Rett. Layer front
+position -0.078740  0.000000  size  0.078740  0.098425  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$PAD "2"
+Shape Rett. Layer front
+position  0.078740  0.000000  size  0.078740  0.098425  orientation 0.00
+drill  0.000000
+shape_offset  0.000000  0.000000
+$EndPAD
+$EndMODULE  R1
+
+$EndDESCRIPTION

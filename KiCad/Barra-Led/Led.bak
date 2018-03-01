@@ -1,0 +1,171 @@
+EESchema Schematic File Version 2
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:Led-cache
+EELAYER 25 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L R R1
+U 1 1 5A8DCC68
+P 2500 2350
+F 0 "R1" V 2580 2350 50  0000 C CNN
+F 1 "R" V 2500 2350 50  0000 C CNN
+F 2 "Resistors_SMD:R_1210_HandSoldering" V 2430 2350 50  0001 C CNN
+F 3 "" H 2500 2350 50  0001 C CNN
+	1    2500 2350
+	1    0    0    -1  
+$EndComp
+$Comp
+L LED D2
+U 1 1 5A8DCCDE
+P 2250 2950
+F 0 "D2" H 2250 3050 50  0000 C CNN
+F 1 "LED" H 2250 2850 50  0000 C CNN
+F 2 "Diodes_SMD:3528" H 2250 2950 50  0001 C CNN
+F 3 "" H 2250 2950 50  0001 C CNN
+	1    2250 2950
+	0    -1   -1   0   
+$EndComp
+$Comp
+L LED D5
+U 1 1 5A8DE0DB
+P 2500 2950
+F 0 "D5" H 2500 3050 50  0000 C CNN
+F 1 "LED" H 2500 2850 50  0000 C CNN
+F 2 "Diodes_SMD:3528" H 2500 2950 50  0001 C CNN
+F 3 "" H 2500 2950 50  0001 C CNN
+	1    2500 2950
+	0    -1   -1   0   
+$EndComp
+$Comp
+L LED D8
+U 1 1 5A8DE0FA
+P 2700 2950
+F 0 "D8" H 2700 3050 50  0000 C CNN
+F 1 "LED" H 2700 2850 50  0000 C CNN
+F 2 "Diodes_SMD:3528" H 2700 2950 50  0001 C CNN
+F 3 "" H 2700 2950 50  0001 C CNN
+	1    2700 2950
+	0    -1   -1   0   
+$EndComp
+$Comp
+L LED D6
+U 1 1 5A8DE11A
+P 2500 3250
+F 0 "D6" H 2500 3350 50  0000 C CNN
+F 1 "LED" H 2500 3150 50  0000 C CNN
+F 2 "Diodes_SMD:3528" H 2500 3250 50  0001 C CNN
+F 3 "" H 2500 3250 50  0001 C CNN
+	1    2500 3250
+	0    -1   -1   0   
+$EndComp
+$Comp
+L LED D1
+U 1 1 5A8DE2CD
+P 2250 2650
+F 0 "D1" H 2250 2750 50  0000 C CNN
+F 1 "LED" H 2250 2550 50  0000 C CNN
+F 2 "Diodes_SMD:3528" H 2250 2650 50  0001 C CNN
+F 3 "" H 2250 2650 50  0001 C CNN
+	1    2250 2650
+	0    -1   -1   0   
+$EndComp
+$Comp
+L LED D4
+U 1 1 5A8DE2F7
+P 2500 2650
+F 0 "D4" H 2500 2750 50  0000 C CNN
+F 1 "LED" H 2500 2550 50  0000 C CNN
+F 2 "Diodes_SMD:3528" H 2500 2650 50  0001 C CNN
+F 3 "" H 2500 2650 50  0001 C CNN
+	1    2500 2650
+	0    -1   -1   0   
+$EndComp
+$Comp
+L LED D7
+U 1 1 5A8DE33C
+P 2700 2650
+F 0 "D7" H 2700 2750 50  0000 C CNN
+F 1 "LED" H 2700 2550 50  0000 C CNN
+F 2 "Diodes_SMD:3528" H 2700 2650 50  0001 C CNN
+F 3 "" H 2700 2650 50  0001 C CNN
+	1    2700 2650
+	0    -1   -1   0   
+$EndComp
+$Comp
+L LED D3
+U 1 1 5A8DE374
+P 2250 3250
+F 0 "D3" H 2250 3350 50  0000 C CNN
+F 1 "LED" H 2250 3150 50  0000 C CNN
+F 2 "Diodes_SMD:3528" H 2250 3250 50  0001 C CNN
+F 3 "" H 2250 3250 50  0001 C CNN
+	1    2250 3250
+	0    -1   -1   0   
+$EndComp
+$Comp
+L LED D9
+U 1 1 5A8DE464
+P 2700 3250
+F 0 "D9" H 2700 3350 50  0000 C CNN
+F 1 "LED" H 2700 3150 50  0000 C CNN
+F 2 "Diodes_SMD:3528" H 2700 3250 50  0001 C CNN
+F 3 "" H 2700 3250 50  0001 C CNN
+	1    2700 3250
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	2700 2500 2250 2500
+Wire Wire Line
+	2250 3400 2700 3400
+Connection ~ 2700 2500
+Connection ~ 2500 2500
+Connection ~ 2250 2500
+Connection ~ 2250 2800
+Connection ~ 2500 2800
+Connection ~ 2700 2800
+Connection ~ 2700 3100
+Connection ~ 2500 3100
+Connection ~ 2250 3100
+Connection ~ 2250 3400
+Connection ~ 2500 3400
+Connection ~ 2700 3400
+$EndSCHEMATC
