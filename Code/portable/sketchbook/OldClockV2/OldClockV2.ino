@@ -33,13 +33,13 @@
 #define Pattern_No_All	2500
 #define Pattern_All1	1000
 #define Pattern_All2	500
-#define Pattern_All3	100
+#define Pattern_All3	200
 
-#define EepromWipe		0  		// init procedure for new eeprom
+#define EepromWipe		0 		// init procedure for new eeprom
 #define EepromRead		0   	// all the eprom data is print on serial port in startup
 #define SystemLog		1		//Enable of System Log on external eprom
-#define FDebug			1		// Enable Fast Debug
-#define SDebug			0		// Eneble Time Debug
+#define FDebug			0		// Enable Fast Debug
+#define SDebug			1		// Eneble Time Debug
 #define TDebug			1000	// Time of debug 
 #define TLcd			1000	// Time Lcd Refresh 
 #define TTwl			1000	// Time for LDR value calculation
@@ -47,7 +47,7 @@
 #define TPatAll			30000	// Time of led alarm indication 
 #define TExitMenu		30000	// Time for auto-exit menu 
 #define TI2cTest		2000	// Time for bus test 
-#define TSvTShDw		200	// Time to Save and Shutdown , power off the PerPwr enable
+#define TSvTShDw		500	// Time to Save and Shutdown , power off the PerPwr enable
 
 #define SelPatt			50		// Selection minimal time 
 #define EntPatt			1500	// Enter
@@ -93,7 +93,7 @@
 #define FaseCTRL		5
 #define LDR				A0
 #define VSens			A1
-#define Light			12
+#define Light			11
 #define LedV			9
 #define LedR			13
 #define MotDir			6
@@ -190,7 +190,6 @@ void setup() {
   pinMode(MotEn, OUTPUT);
   pinMode(PerPwr, OUTPUT);
   analogReference(DEFAULT);
-
   digitalWrite(PerPwr, HIGH);      //Turne On The Periferical Power
   delay(500);
   Wire.begin();
@@ -205,7 +204,7 @@ void setup() {
   lcd.print("Msystem");
   lcd.setCursor(1, 1);
   lcd.print("Old Clock V2.0");
-  delay(500);
+  delay(1000);
   lcd.clear();
   lcd.setBacklight(LOW);
   MotorSpeed = EEPROM.read(M_MotSpeed);
@@ -218,6 +217,8 @@ void setup() {
   EpromAdd += 10;
   digitalWrite(MotDir , EEPROM.read(M_MDir));
   VSensLim = EEPROM.read(M_VSensLim);
+
+
   // EpromAdd = 0;
 
   if (EpromAdd < LowEpromLim) EpromAdd = LowEpromLim;
@@ -280,20 +281,20 @@ void Debug() {
   //  Serial.println(InitEdit, DEC);
   //  Serial.print("Cursor");
   //  Serial.println(Cursor, DEC);
-  //  Serial.print("HMec ");
-  //  Serial.print(HMec, DEC);
-  //  Serial.print("  ");
-  //  Serial.println(DataTime[4], DEC);
-  //  Serial.print("MMec ");
-  //  Serial.print(MMec, DEC);
-  //  Serial.print("  ");
-  //  Serial.println(DataTime[5], DEC);
-  //  Serial.print("Fase CTRL  ");
-  //  Serial.println(digitalRead(FaseCTRL), DEC);
-  Serial.print("VSensVal   ");
-  Serial.println(VSensVal, DEC);
-  Serial.print("VSensValOld   ");
-  Serial.println(VSensValOld, DEC);
+  Serial.print("HMec ");
+  Serial.print(HMec, DEC);
+  Serial.print("  ");
+  Serial.println(DataTime[4], DEC);
+  Serial.print("MMec ");
+  Serial.print(MMec, DEC);
+  Serial.print("  ");
+  Serial.println(DataTime[5], DEC);
+  Serial.print("Fase CTRL  ");
+  Serial.println(digitalRead(FaseCTRL), DEC);
+  //Serial.print("VSensVal   ");
+  //Serial.println(VSensVal, DEC);
+  //Serial.print("VSensValOld   ");
+  //Serial.println(VSensValOld, DEC);
   //Serial.println(analogRead(VSens));
 }
 
@@ -438,39 +439,45 @@ void loop() {
   if ((SvTShDw) && (millis() > TimeSvTShDw) && digitalRead(PerPwr))  {
     digitalWrite(PerPwr, LOW);
     if (FDebug) Serial.println("Per PWR Off");
+    while (1) {
+      VSensVal = ((analogRead(VSens) * 10) / 68);
+      if (VSensVal > VSensLim + 20)   resetFunc();
+      delay(500);
+      digitalWrite(LedR, (digitalRead(LedR) ^ 1));
+    }
   }
-    if (SvTShDw && (VSensVal > VSensLim + 20))   resetFunc();
 
-      //  if (Serial.available()) {
-      //    SerAll[SerCount] = Serial.read();
-      //    SerCount++;
-      //    if (SerCount >= SerAllMes) {
-      //      Serial.println("OK");
-      //      sprintf(buffer, "%c;%02d;%02d" , SerAll[0], SerAll[1], SerAll[2]);
-      //      Serial.println(buffer);
-      //       SerCount=0;
-      //       for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-      //        AllBuff[7] = SerAll[0];
-      //        AllBuff[8] = SerAll[1];
-      //        AllBuff[9] = SerAll[2];
-      //        AllReady = 1;
-      //        Pattern = Pattern_All1;
-      //    }
-      //  }
+  //  if (Serial.available()) {
+  //    SerAll[SerCount] = Serial.read();
+  //    SerCount++;
+  //    if (SerCount >= SerAllMes) {
+  //      Serial.println("OK");
+  //      sprintf(buffer, "%c;%02d;%02d" , SerAll[0], SerAll[1], SerAll[2]);
+  //      Serial.println(buffer);
+  //       SerCount=0;
+  //       for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
+  //        AllBuff[7] = SerAll[0];
+  //        AllBuff[8] = SerAll[1];
+  //        AllBuff[9] = SerAll[2];
+  //        AllReady = 1;
+  //        Pattern = Pattern_All1;
+  //    }
+  //  }
 
-      if (millis() >= TimeBlink) {						//Led Program state
-        digitalWrite(LedR, (digitalRead(LedR) ^ 1));
-        if ((Pattern != Pattern_No_All) && !PattAllOn) {
-          TimePatt = (millis() + TPatAll);
-          PattAllOn = 1;
-        }
-        else TimeBlink = (millis() + Pattern);
-        if (millis() > TimePatt) {
-          Pattern = Pattern_No_All;
-          PattAllOn = 0;
-        }
+  if (millis() >= TimeBlink) {						//Led Program state
+    digitalWrite(LedR, (digitalRead(LedR) ^ 1));
+    if ((Pattern != Pattern_No_All) && !PattAllOn) {
+      TimePatt = (millis() + TPatAll);
+      PattAllOn = 1;
+    }
+    else TimeBlink = (millis() + Pattern);
 
-      }
+    if (millis() > TimePatt) {
+      Pattern = Pattern_No_All;
+      PattAllOn = 0;
+    }
+
+  }
   if (millis() >= TimeI2cTest) {
     Wire.beginTransmission(LCD_I2C_ADDR);
     if (Wire.endTransmission()) {
@@ -521,7 +528,7 @@ Out:
 
 
   VSensVal = ((analogRead(VSens) * 10) / 68); //61);
-
+  //VSensLim=VSensVal-20;
   //VSensVal = 10 + VSensLim;
   if ((VSensVal < VSensLim) && !SvTShDw) {
     EEPROM.write(M_MMec , MMec);
@@ -533,7 +540,7 @@ Out:
     AllBuff[7] = 'A';
     AllBuff[8] = SAVE_SHUTDOWN;
     AllReady = 1;
-    Pattern = Pattern_All3;
+    Pattern = Pattern_All2;
     SvTShDw = 1;                        //Save To ShutDown
     TimeSvTShDw = millis() + TSvTShDw;
     if (FDebug) Serial.println("Salvato");
@@ -541,7 +548,8 @@ Out:
 
 
   if ((millis() >= TimeRMot ) && !SvTShDw) {
-    TimeRMot =  (millis() + TRMot);
+    // TimeRMot =  (millis() + TRMot);
+    TimeRMot =  ((millis() + TRMot) - (DataTime[6] * 1000));
     if (((HMec <= 23 ) && (MMec <= 59)) && ((HMec > 10) && (digitalRead(FaseCTRL) == 0))) {
       if (FDebug) Serial.println("Anticipo");
       MMec++;
@@ -565,7 +573,7 @@ Out:
       }
     }
     else {
-      if (!HMec && !MMec && digitalRead(FaseCTRL && !MoveMot)) {
+      if (!HMec && !MMec && digitalRead(FaseCTRL) && !MoveMot) {
         MoveMot = 1;
         TimeMotSpeed = ( millis() + (MotorSpeed * 10));
         TimeRMot = (millis() + (MotorSpeed * 20));
@@ -613,13 +621,13 @@ Out:
     }
   }
   if (millis() > TimeTwl) {
-    TwlAve += (analogRead(LDR) >> 1);
+    TwlAve += (analogRead(LDR) >> 2);
     Sample += 1;
   }
 
   if (Sample >= SampleN) {
-  TwlVal = TwlAve / SampleN;
-  TimeTwl = (millis() + TTwl);
+    TwlVal = TwlAve / SampleN;
+    TimeTwl = (millis() + TTwl);
     Sample = 0;
     TwlAve = 0;
     if (TwlVal >= TwlR_On) digitalWrite(Light, HIGH);
@@ -629,6 +637,7 @@ Out:
   if ((millis() > TimeDeb) && SDebug) {
     TimeDeb = (millis() + TDebug);
     Debug();
+
   }
 
   if ((millis() > TimeLcd) && (Menu == 0)) {
@@ -664,108 +673,113 @@ Out:
     lcd.setBacklight(LOW);
   }
   if ((EditState == 1) && (EditMode == 0)) Menu += 1;
-    if ((EditState == 2) && Menu && (EditMode == 1)) {        //Parameter saving and date-time consistency check
-      if (Menu == 1) {
-        if (CtrlData(SetDataTime[2], SetDataTime[1], SetDataTime[0])) {  //Coherent date control
-          SendDateTime(&SetDataTime[0]);
-          goto SaveOk;
-        }
-        else goto SaveFault;
-      }
-      if (Menu == 2) {
-        MotorSpeed = SetData;
-        EEPROM.write(M_MotSpeed, MotorSpeed);
+  if ((EditState == 2) && Menu && (EditMode == 1)) {        //Parameter saving and date-time consistency check
+    if (Menu == 1) {
+      if (CtrlData(SetDataTime[2], SetDataTime[1], SetDataTime[0])) {  //Coherent date control
+        SendDateTime(&SetDataTime[0]);
         goto SaveOk;
       }
-      if (Menu == 3) {
-        if (TwlR_On > (TwlR_Off + TwlRDelta)) {
-          TwlR_On = SetData;
-          EEPROM.write(M_TwlR_On, TwlR_On);
-          goto SaveOk;
-        }
-        else {
-          goto SaveFault;
-        }
+      else goto SaveFault;
+    }
+    if (Menu == 2) {
+      MotorSpeed = SetData;
+      EEPROM.write(M_MotSpeed, MotorSpeed);
+      goto SaveOk;
+    }
+    if (Menu == 3) {
+      if (SetData > (TwlR_Off + TwlRDelta)) {
+        TwlR_On = SetData;
+        EEPROM.write(M_TwlR_On, TwlR_On);
+        goto SaveOk;
       }
-      if (Menu == 4) {
-        if (TwlR_Off < (TwlR_On - TwlRDelta)) {
-          TwlR_Off = SetData;
-          EEPROM.write(M_TwlR_Off, TwlR_Off);
-          goto SaveOk;
-        }
-        else {
-          goto SaveFault;
-        }
+      else {
+        goto SaveFault;
       }
+    }
+    if (Menu == 4) {
+      if (SetData < (TwlR_On - TwlRDelta)) {
+        TwlR_Off = SetData;
+        EEPROM.write(M_TwlR_Off, TwlR_Off);
+        goto SaveOk;
+      }
+      else {
+        goto SaveFault;
+      }
+    }
 
-      if (Menu == 5) {
+    if (Menu == 5) {
+      if (SetData < (VSensVal - 10)) {
         VSensLim = SetData;
         EEPROM.write(M_VSensLim, VSensLim);
         goto SaveOk;
       }
+      else {
+        goto SaveFault;
+      }
+    }
 
 
 SaveOk:
-      lcd.setCursor(14, 1);
-      lcd.print("Ok");
-      if (FDebug) Serial.print("OK");
-      //delay(1000);
-      TimeLcd = (millis() + 1000);       //delay the LCD refresh
-      for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-      AllBuff[7] = EVENT;
-      AllBuff[8] = CHANGE_DATA;
-      AllReady = 1;
-      goto Exit;
+    lcd.setCursor(14, 1);
+    lcd.print("Ok");
+    if (FDebug) Serial.print("OK");
+    //delay(1000);
+    TimeLcd = (millis() + 1000);       //delay the LCD refresh
+    for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
+    AllBuff[7] = EVENT;
+    AllBuff[8] = CHANGE_DATA;
+    AllReady = 1;
+    goto Exit;
 SaveFault:
-      lcd.clear();
-      lcd.setCursor(2, 0);
-      lcd.print("Errore Data");
-      if (FDebug) Serial.print("Errore Data");
-      //delay(1500);
-      TimeLcd = (millis() + 1500);
-      for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-      AllBuff[7] = ALARM;
-      AllBuff[8] = DATA_FAULT;
-      AllReady = 1;
-      Pattern = Pattern_All1;
+    lcd.clear();
+    lcd.setCursor(2, 0);
+    lcd.print("Errore Data");
+    if (FDebug) Serial.print("Errore Data");
+    //delay(1500);
+    TimeLcd = (millis() + 1500);
+    for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
+    AllBuff[7] = ALARM;
+    AllBuff[8] = DATA_FAULT;
+    AllReady = 1;
+    Pattern = Pattern_All1;
 Exit:
-      SetData = 0;
-      SetDataOld = 0;
-      EditMode = 0;
-      Menu = 0;
-      MenuOld = 0;
-      InitEdit = 0;
-      Cursor = 0;
-      lcd.noBlink();
-    }
+    SetData = 0;
+    SetDataOld = 0;
+    EditMode = 0;
+    Menu = 0;
+    MenuOld = 0;
+    InitEdit = 0;
+    Cursor = 0;
+    lcd.noBlink();
+  }
   if ((EditState == 2) && Menu && (EditMode == 0)) EditMode = 1;
-    if (Menu >= MenuPage)Menu = 0;
-    if ((Menu != MenuOld) && (EditMode == 0)) {       //Menu page update
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        //if (FDebug) Serial.println(Menu, DEC);
-        switch (Menu) {
-          case 1:
-            lcd.print("Imposta data ora");
-            break;
-          case 2:
-            lcd.print("Velocita motore");
-            break;
-          case 3:
-            lcd.print("Crepuscolare On");
-            break;
-          case 4:
-            lcd.print("Crepuscolare Off");
-            break;
-          case 5:
-            lcd.print("CTRL Tensione");
-            break;
-          case 6:
-            lcd.print("System LOG");
-            break;
-        }
-        MenuOld = Menu;
-      }
+  if (Menu >= MenuPage)Menu = 0;
+  if ((Menu != MenuOld) && (EditMode == 0)) {       //Menu page update
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    //if (FDebug) Serial.println(Menu, DEC);
+    switch (Menu) {
+      case 1:
+        lcd.print("Imposta data ora");
+        break;
+      case 2:
+        lcd.print("Velocita motore");
+        break;
+      case 3:
+        lcd.print("Crepuscolare On");
+        break;
+      case 4:
+        lcd.print("Crepuscolare Off");
+        break;
+      case 5:
+        lcd.print("CTRL Tensione");
+        break;
+      case 6:
+        lcd.print("System LOG");
+        break;
+    }
+    MenuOld = Menu;
+  }
 
   //--------EDIT MODE-------------
   if ((Menu == 1) && (EditMode)) {
