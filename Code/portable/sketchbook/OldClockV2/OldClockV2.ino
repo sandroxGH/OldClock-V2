@@ -18,7 +18,7 @@
 #define ALARM			'A'
 #define MESSAGE			'M'
 #define START_UP		1
-#define I2C_FAULT		2
+//#define I2C_FAULT		2
 #define CHANGE_DATA		3
 #define DATA_FAULT		4
 #define MCL_ADVANCE		5
@@ -246,13 +246,13 @@ void setup() {
     if (FDebug) Serial.println("RTC is NOT running!");
     Pattern = Pattern_All3;
     for (i = 0; i <= 6; i++) AllBuff[i] = 99;
-    AllBuff[7] =  'A';
+    AllBuff[7] =  ALARM;
     AllBuff[8] = RTC_NOT_RUN;
     AllReady = 1;
   }
   else {
     for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-    AllBuff[7] = 'E';
+    AllBuff[7] = EVENT;
     AllBuff[8] = START_UP;
     AllReady = 1;
     Pattern = Pattern_No_All;
@@ -441,9 +441,9 @@ void loop() {
     if (FDebug) Serial.println("Per PWR Off");
     while (1) {
       VSensVal = ((analogRead(VSens) * 10) / 68);
-      if (VSensVal > VSensLim + 20)   resetFunc();
+      if (VSensVal > VSensLim + 20 && (VSensVal < 145))   resetFunc();
       delay(500);
-      digitalWrite(LedR, (digitalRead(LedR) ^ 1));
+      digitalWrite(LedR, !digitalRead(LedR));
     }
   }
 
@@ -484,7 +484,7 @@ void loop() {
       if (FDebug) Serial.println("Lcd Bus Fault");
       if (!LcdAll ) {
         for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-        AllBuff[7] = 'A';
+        AllBuff[7] = ALARM;
         AllBuff[8] = LCD_BUS_FAULT;
         AllReady = 1;
         Pattern = Pattern_All2;
@@ -498,7 +498,7 @@ void loop() {
       if (FDebug) Serial.println("RTC Bus Fault");
       if (!RtcAll ) {
         for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-        AllBuff[7] = 'A';
+        AllBuff[7] = ALARM;
         AllBuff[8] = RTC_BUSS_FAULT;
         AllReady = 1;
         Pattern = Pattern_All2;
@@ -512,7 +512,7 @@ void loop() {
       if (FDebug) Serial.println("Eeprom Bus Fault");
       if (!EpromAll ) {
         for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-        AllBuff[7] = 'A';
+        AllBuff[7] = ALARM;
         AllBuff[8] = EPR_BUSS_FAULT;
         AllReady = 1;
         Pattern = Pattern_All2;
@@ -537,7 +537,7 @@ Out:
     EEPROM.write(M_EpromAdd, EpromAdd);
     EEPROM.write(M_EpromAdd1, (EpromAdd >> 8));
     for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-    AllBuff[7] = 'A';
+    AllBuff[7] = ALARM;
     AllBuff[8] = SAVE_SHUTDOWN;
     AllReady = 1;
     Pattern = Pattern_All2;
@@ -550,7 +550,7 @@ Out:
   if ((millis() >= TimeRMot ) && !SvTShDw) {
     // TimeRMot =  (millis() + TRMot);
     TimeRMot =  ((millis() + TRMot) - (DataTime[6] * 1000));
-    if (((HMec <= 23 ) && (MMec <= 59)) && ((HMec > 10) && (digitalRead(FaseCTRL) == 0))) {
+    if (((HMec <= 23 ) && (MMec <= 59)) && (HMec && digitalRead(FaseCTRL))) {
       if (FDebug) Serial.println("Anticipo");
       MMec++;
       if (MMec >= 60) {
@@ -562,10 +562,10 @@ Out:
       TimeRMot =  millis();
       //EEPROM.write(M_MMec , MMec);
       //EEPROM.write(M_HMec , HMec);
-      if (MClAdAll) {
+      if (!MClAdAll) {
         if (FDebug) Serial.println("MCL_ADVANCE");
         for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-        AllBuff[7] = 'A';
+        AllBuff[7] = ALARM;
         AllBuff[8] = MCL_ADVANCE;
         AllReady = 1;
         Pattern = Pattern_All1;
@@ -573,15 +573,15 @@ Out:
       }
     }
     else {
-      if (!HMec && !MMec && digitalRead(FaseCTRL) && !MoveMot) {
+      if (!HMec && !MMec && !digitalRead(FaseCTRL) && !MoveMot) {
         MoveMot = 1;
         TimeMotSpeed = ( millis() + (MotorSpeed * 10));
         TimeRMot = (millis() + (MotorSpeed * 20));
         digitalWrite (MotEn , HIGH);
-        if (MClDlAll) {
+        if (!MClDlAll) {
           if (FDebug) Serial.println("MCL_DELAY");
           for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-          AllBuff[7] = 'A';
+          AllBuff[7] = ALARM;
           AllBuff[8] = MCL_DELAY;
           AllReady = 1;
           Pattern = Pattern_All1;
@@ -607,7 +607,8 @@ Out:
     if (millis() >= TimeMotSpeed ) {
       if (FDebug) Serial.println("motore");
       digitalWrite(MotEn, LOW);
-      digitalWrite(MotDir, ((digitalRead(MotDir) ^ 1)));
+      delay(10);
+      digitalWrite(MotDir, (!digitalRead(MotDir)));
       MMec++;
       if (MMec >= 60) {
         MMec = 0;
