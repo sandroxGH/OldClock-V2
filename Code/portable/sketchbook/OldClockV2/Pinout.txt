@@ -1,0 +1,30 @@
+1	D1/TX	SerialCon 
+2	D0/RX	SerialCon
+3	RESET
+4	GND
+5	D2*		Edit Button
+6	D3		Up Button
+7	D4		Down Button
+8	D5*		Sensor for 0 meccanical detect
+9	D6* 	Motor Direction 
+10	D7		Motor Enable 
+11	D8		Periphral Power 
+12	D9* 	Green Led For Debug 
+13	D10*		
+14	D11* 	Led light 
+15	D12  	
+16	D13		Red Led Fro program State 
+17	3V3		
+18	AREF
+19	A7		
+20	A6		
+21	A5		
+22	A4		
+23	A3		
+24	A2		
+25	A1		Supply voltage control 
+26	A0		Light Dependent Resistor
+27	+5V
+28	RESET
+29	GND
+30	VIN

@@ -13,14 +13,14 @@
 #include <EEPROM.h>
 #include <avr/wdt.h>
 
-//Alarm table
+//---------Alarm table-----------------
 #define EVENT			'E'
 #define ALARM			'A'
 #define MESSAGE			'M'
 #define START_UP		1
-//#define I2C_FAULT		2
-#define CHANGE_DATA		3
-#define DATA_FAULT		4
+#define CHANGE_DATE		2
+#define DATA_FAULT		3
+#define MCL_WAITING		4
 #define MCL_ADVANCE		5
 #define MCL_DELAY		6
 #define LCD_BUS_FAULT	7
@@ -29,21 +29,22 @@
 #define RTC_NOT_RUN		10
 #define SAVE_SHUTDOWN	11
 
-//Alarm Led Blink Pattern
+//-------Alarm Led Blink Pattern-------
 #define Pattern_No_All	2500
 #define Pattern_All1	1000
 #define Pattern_All2	500
 #define Pattern_All3	200
 
+//-----------Timer Setting-------------
 #define EepromWipe		0 		// init procedure for new eeprom
 #define EepromRead		0   	// all the eprom data is print on serial port in startup
 #define SystemLog		1		//Enable of System Log on external eprom
-#define FDebug			0		// Enable Fast Debug
+#define FDebug			1		// Enable Fast Debug
 #define SDebug			1		// Eneble Time Debug
 #define TDebug			1000	// Time of debug 
 #define TLcd			1000	// Time Lcd Refresh 
 #define TTwl			1000	// Time for LDR value calculation
-#define TRMot			62000	// Time 
+#define TRMot			60500	// Time 
 #define TPatAll			30000	// Time of led alarm indication 
 #define TExitMenu		30000	// Time for auto-exit menu 
 #define TI2cTest		2000	// Time for bus test 
@@ -72,7 +73,7 @@
 
 
 
-//I2C Addres and pinout
+//---------LCD I2C Addres and pinout---
 #define EEPROM_ADDR		0x50
 #define LCD_I2C_ADDR	0x27
 #define DS1307_ADDR		0x68
@@ -86,7 +87,7 @@
 #define D7_pin			7
 
 
-//Arduino PinOut
+//----------Arduino PinOut-------------
 #define EdButt			2
 #define UpButt			3
 #define DwButt			4
@@ -101,7 +102,7 @@
 #define PerPwr			8
 
 
-// Arduino EEPROM data storage
+//-----Arduino EEPROM data storage-----
 #define M_MotSpeed		1
 #define M_TwlR_On		2						//Twilight relays threshold On
 #define M_TwlR_Off		3						//Twilight relays threshold Off
@@ -145,6 +146,8 @@ int VSensVal;
 int VSensValOld;
 int VSensLim;
 int j;
+int SumMinMec = 0;
+int SumMinRtc = 0;
 
 char EditState = 0;
 char Menu = 0;
@@ -157,12 +160,17 @@ char SerCount;
 
 byte EpromPageOffset = 0;
 byte NotAligLengt  = 0;
-byte Char10[8] = { B00010, B00100, B01000, B10000, B01011, B11011, B01011, B01011 };
-byte CharV[8] = { B10001, B10001, B01010, B01010, B00100, B00001, B00010, B00100 };
+byte Char10[8] = {
+  B00010, B00100, B01000, B10000, B01011, B11011, B01011, B01011
+};
+byte CharV[8] = {
+  B10001, B10001, B01010, B01010, B00100, B00001, B00010, B00100
+};
 
 bool AllReady  = 0;
 bool MClAdAll  = 0;
 bool MClDlAll  = 0;
+bool MClWaAll	= 0;
 bool LcdAll    = 0;
 bool RtcAll    = 0;
 bool EpromAll  = 0;
@@ -176,7 +184,7 @@ bool SvTShDw  = 0;
 
 LiquidCrystal_I2C lcd(LCD_I2C_ADDR, En_pin, Rw_pin, Rs_pin, D4_pin, D5_pin, D6_pin, D7_pin);
 
-void(* resetFunc) (void) = 0;
+void(* resetFunc) (void) = 0;   //Reset SW
 
 void setup() {
   pinMode(EdButt, INPUT_PULLUP);
@@ -257,8 +265,8 @@ void setup() {
     AllReady = 1;
     Pattern = Pattern_No_All;
   }
-  //TimeRMot =  millis();
-  TimeRMot =  ((millis() + TRMot) - (DataTime[6] * 1000)); //To sync motor revolution with RTC
+  TimeRMot =  millis();
+  //TimeRMot =  ((millis() + TRMot) - (DataTime[6] * 1000)); //To sync motor revolution with RTC
   //HMec = DataTime[4];
   //MMec = DataTime[5];
 
@@ -373,7 +381,9 @@ byte readByte() {
 }
 
 boolean CtrlData(byte dd, byte mm, byte yy) {
-  uint8_t GGMese[12] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+  uint8_t GGMese[12] = {
+    31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+  };
   if ((mm < 1) || (mm > 12)) return false;						 // Is not a mounth
   if (yy % 4 == 0) GGMese[1] = 29; 								 // leap year
   if (dd < 1 || dd > GGMese[mm - 1]) return false;
@@ -426,6 +436,16 @@ void EEpromReadBuff( int deviceaddress, int eeaddress, byte* buffer, int length 
 
 void loop() {
 
+  //------------Time Debug Mng---------
+
+  if ((millis() > TimeDeb) && SDebug) {
+    TimeDeb = (millis() + TDebug);
+    Debug();
+
+  }
+
+  //------------Alarm Log--------------
+
   if ((AllReady) && (SystemLog)) {
     EEpromWriteBuff(EEPROM_ADDR, EpromAdd , &AllBuff[0], 10);
     EEPROM.write(M_EpromAdd, EpromAdd);
@@ -435,6 +455,8 @@ void loop() {
     if (EpromAdd < LowEpromLim) EpromAdd = LowEpromLim;
     AllReady = 0;
   }
+
+  //------------Shutdown & Restart-----
 
   if ((SvTShDw) && (millis() > TimeSvTShDw) && digitalRead(PerPwr))  {
     digitalWrite(PerPwr, LOW);
@@ -446,11 +468,11 @@ void loop() {
       digitalWrite(LedR, !digitalRead(LedR));
     }
   }
-
+  //------------
   //  if (Serial.available()) {
   //    SerAll[SerCount] = Serial.read();
   //    SerCount++;
-  //    if (SerCount >= SerAllMes) {
+  //    if ((SerCount >= SerAllMes)&&(!AllReady) {
   //      Serial.println("OK");
   //      sprintf(buffer, "%c;%02d;%02d" , SerAll[0], SerAll[1], SerAll[2]);
   //      Serial.println(buffer);
@@ -464,7 +486,9 @@ void loop() {
   //    }
   //  }
 
-  if (millis() >= TimeBlink) {						//Led Program state
+  //---------Red Led Program State-----
+
+  if (millis() >= TimeBlink) {
     digitalWrite(LedR, (digitalRead(LedR) ^ 1));
     if ((Pattern != Pattern_No_All) && !PattAllOn) {
       TimePatt = (millis() + TPatAll);
@@ -478,7 +502,10 @@ void loop() {
     }
 
   }
-  if (millis() >= TimeI2cTest) {
+
+  //------------I2c Bus Test-----------
+
+  if ((millis() >= TimeI2cTest) && (!AllReady)) {
     Wire.beginTransmission(LCD_I2C_ADDR);
     if (Wire.endTransmission()) {
       if (FDebug) Serial.println("Lcd Bus Fault");
@@ -525,11 +552,10 @@ void loop() {
 Out:
     TimeI2cTest = millis() + TI2cTest;
   }
-
+  //-------Supply Voltage Control------
 
   VSensVal = ((analogRead(VSens) * 10) / 68); //61);
-  //VSensLim=VSensVal-20;
-  //VSensVal = 10 + VSensLim;
+
   if ((VSensVal < VSensLim) && !SvTShDw) {
     EEPROM.write(M_MMec , MMec);
     EEPROM.write(M_HMec , HMec);
@@ -546,81 +572,102 @@ Out:
     if (FDebug) Serial.println("Salvato");
   }
 
+  //------------Motor Management-------
 
   if ((millis() >= TimeRMot ) && !SvTShDw) {
-    // TimeRMot =  (millis() + TRMot);
     TimeRMot =  ((millis() + TRMot) - (DataTime[6] * 1000));
-    if (((HMec <= 23 ) && (MMec <= 59)) && (HMec && digitalRead(FaseCTRL))) {
-      if (FDebug) Serial.println("Anticipo");
-      MMec++;
-      if (MMec >= 60) {
-        MMec = 0;
-        HMec++;
-      }
-      if (HMec >= 24) HMec = 0;
-      if (FDebug) Serial.println("Fase Ok");
-      TimeRMot =  millis();
-      //EEPROM.write(M_MMec , MMec);
-      //EEPROM.write(M_HMec , HMec);
-      if (!MClAdAll) {
-        if (FDebug) Serial.println("MCL_ADVANCE");
+    SumMinMec = (MMec + (HMec * 60));
+    SumMinRtc = (DataTime[4] + (DataTime[5] * 60));
+    if ((SumMinMec > SumMinRtc + 60) && (MoveMot == 0)) {
+      HMec = DataTime[4];
+      MMec = DataTime[5];
+      if (!MClWaAll) {
+        if (FDebug) Serial.println("MCL_WAITING");
         for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-        AllBuff[7] = ALARM;
-        AllBuff[8] = MCL_ADVANCE;
+        AllBuff[7] = EVENT;
+        AllBuff[8] = MCL_WAITING;
         AllReady = 1;
         Pattern = Pattern_All1;
-        MClAdAll = 1;
+        MClWaAll = 1;
       }
     }
     else {
-      if (!HMec && !MMec && !digitalRead(FaseCTRL) && !MoveMot) {
-        MoveMot = 1;
-        TimeMotSpeed = ( millis() + (MotorSpeed * 10));
-        TimeRMot = (millis() + (MotorSpeed * 20));
-        digitalWrite (MotEn , HIGH);
-        if (!MClDlAll) {
-          if (FDebug) Serial.println("MCL_DELAY");
+
+      if ((HMec <= 23) && (MMec <= 59) && (HMec > 0) && digitalRead(FaseCTRL)) {
+        if (FDebug) Serial.println("Attesa in Fase");
+        // MMec++;
+        // if (MMec >= 60) {
+        // MMec = 0;
+        // HMec++;
+        // }
+        // if (HMec >= 24) HMec = 0;
+        //if (FDebug) Serial.println("Fase Ok");
+        // TimeRMot =  millis();
+        HMec = DataTime[4];
+        MMec = DataTime[5];
+
+        if (!MClAdAll) {
+          if (FDebug) Serial.println("MCL_ADVANCE");
           for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
           AllBuff[7] = ALARM;
-          AllBuff[8] = MCL_DELAY;
+          AllBuff[8] = MCL_ADVANCE;
           AllReady = 1;
           Pattern = Pattern_All1;
-          MClDlAll = 1;
+          MClAdAll = 1;
         }
       }
       else {
-        if (((HMec != DataTime[4]) || (MMec != DataTime[5])) && (MoveMot == 0)) {
-          if (FDebug) Serial.println("Recupero");
+        if (!HMec && !MMec && !digitalRead(FaseCTRL) && !MoveMot) {
+          if (FDebug) Serial.println("Recupero Ritardo");
+          MoveMot = 1;
+          digitalWrite (MotEn , HIGH);
           TimeMotSpeed = ( millis() + (MotorSpeed * 10));
           TimeRMot = (millis() + (MotorSpeed * 20));
-          if ((HMec == DataTime[4]) && (MMec == (DataTime[5] - 1))) TimeRMot =  ((millis() + TRMot) - (DataTime[6] * 1000));
-          digitalWrite (MotEn , HIGH);
-          MoveMot = 1;
-          MClAdAll = MClDlAll = 0;
+          if (!MClDlAll) {
+            if (FDebug) Serial.println("MCL_DELAY");
+            for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
+            AllBuff[7] = ALARM;
+            AllBuff[8] = MCL_DELAY;
+            AllReady = 1;
+            Pattern = Pattern_All1;
+            MClDlAll = 1;
+          }
+        }
+        else {
+          if (((HMec != DataTime[4]) || (MMec != DataTime[5])) && (MoveMot == 0)) {
+            if (FDebug) Serial.println("Recupero");
+            TimeMotSpeed = ( millis() + (MotorSpeed * 10));
+            TimeRMot = (millis() + (MotorSpeed * 20));   //20
+            //if ((HMec == DataTime[4]) && (MMec == (DataTime[5] - 1))) TimeRMot =  ((millis() + TRMot) - (DataTime[6] * 1000));
+            digitalWrite (MotEn , HIGH);
+            MoveMot = 1;
+            MClAdAll = MClDlAll = MClWaAll = 0;
+          }
         }
       }
     }
   }
 
   if ((MoveMot == 1) && !SvTShDw) {
-    // if ((MoveMot == 1) ) {
     if (millis() >= TimeMotSpeed ) {
       if (FDebug) Serial.println("motore");
       digitalWrite(MotEn, LOW);
       delay(10);
       digitalWrite(MotDir, (!digitalRead(MotDir)));
-      MMec++;
-      if (MMec >= 60) {
-        MMec = 0;
-        HMec++;
+      if (!MClDlAll) {
+        MMec++;
+        if (MMec >= 60) {
+          MMec = 0;
+          HMec++;
+        }
+        if (HMec >= 24) HMec = 0;
       }
-      if (HMec >= 24) HMec = 0;
-      //EEPROM.write(M_MMec , MMec);
-      //EEPROM.write(M_HMec , HMec);
-      //EEPROM.write(M_MDir , digitalRead(MotDir));
       MoveMot = 0;
     }
   }
+
+  //------------Twilight Control-------
+
   if (millis() > TimeTwl) {
     TwlAve += (analogRead(LDR) >> 2);
     Sample += 1;
@@ -635,11 +682,7 @@ Out:
     if (TwlVal < TwlR_Off) digitalWrite(Light, LOW);
   }
 
-  if ((millis() > TimeDeb) && SDebug) {
-    TimeDeb = (millis() + TDebug);
-    Debug();
-
-  }
+  //------------Main LCD Mng-----------
 
   if ((millis() > TimeLcd) && (Menu == 0)) {
     TimeLcd = (millis() + TLcd);
@@ -658,6 +701,8 @@ Out:
     lcd.print(TwlVal, DEC);
   }
 
+  //---------Menu Mng Edit Mode---------
+
   EditState = ButtonState(EdButt, &TimeEdButt);
   UpButtState = ButtonState(UpButt, &TimeUpButt);
   DwButtState = ButtonState(DwButt, &TimeDwButt);
@@ -673,6 +718,16 @@ Out:
     lcd.noBlink();
     lcd.setBacklight(LOW);
   }
+  //-------Mechanical Time Display-----
+  // if ((UpButtState == 1) && (Menu == 0 )) {
+  // TimeLcd = (millis() + 15000);
+  // lcd.clear();
+  // lcd.setCursor(0, 0);
+  // lcd.print("Ora Meccanica");
+  // sprintf(buffer,  "%02d:%02d", HMec, MMec);
+  // lcd.setCursor(1, 1);
+  // lcd.print( buffer );
+  // }
   if ((EditState == 1) && (EditMode == 0)) Menu += 1;
   if ((EditState == 2) && Menu && (EditMode == 1)) {        //Parameter saving and date-time consistency check
     if (Menu == 1) {
@@ -683,11 +738,16 @@ Out:
       else goto SaveFault;
     }
     if (Menu == 2) {
+      HMec = SetDataTime[0];
+      MMec = SetDataTime[1];
+      goto SaveOk;
+    }
+    if (Menu == 3) {
       MotorSpeed = SetData;
       EEPROM.write(M_MotSpeed, MotorSpeed);
       goto SaveOk;
     }
-    if (Menu == 3) {
+    if (Menu == 4) {
       if (SetData > (TwlR_Off + TwlRDelta)) {
         TwlR_On = SetData;
         EEPROM.write(M_TwlR_On, TwlR_On);
@@ -697,7 +757,7 @@ Out:
         goto SaveFault;
       }
     }
-    if (Menu == 4) {
+    if (Menu == 5) {
       if (SetData < (TwlR_On - TwlRDelta)) {
         TwlR_Off = SetData;
         EEPROM.write(M_TwlR_Off, TwlR_Off);
@@ -708,7 +768,7 @@ Out:
       }
     }
 
-    if (Menu == 5) {
+    if (Menu == 6) {
       if (SetData < (VSensVal - 10)) {
         VSensLim = SetData;
         EEPROM.write(M_VSensLim, VSensLim);
@@ -719,7 +779,6 @@ Out:
       }
     }
 
-
 SaveOk:
     lcd.setCursor(14, 1);
     lcd.print("Ok");
@@ -728,7 +787,7 @@ SaveOk:
     TimeLcd = (millis() + 1000);       //delay the LCD refresh
     for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
     AllBuff[7] = EVENT;
-    AllBuff[8] = CHANGE_DATA;
+    AllBuff[8] = CHANGE_DATE;
     AllReady = 1;
     goto Exit;
 SaveFault:
@@ -754,35 +813,39 @@ Exit:
     lcd.noBlink();
   }
   if ((EditState == 2) && Menu && (EditMode == 0)) EditMode = 1;
-  if (Menu >= MenuPage)Menu = 0;
+  if (Menu > MenuPage)Menu = 0;
   if ((Menu != MenuOld) && (EditMode == 0)) {       //Menu page update
     lcd.clear();
     lcd.setCursor(0, 0);
     //if (FDebug) Serial.println(Menu, DEC);
     switch (Menu) {
       case 1:
-        lcd.print("Imposta data ora");
+        lcd.print("Imposta data ora RTC");
         break;
       case 2:
-        lcd.print("Velocita motore");
+        lcd.print("Ora Meccanica");
         break;
       case 3:
-        lcd.print("Crepuscolare On");
+        lcd.print("Velocita motore");
         break;
       case 4:
-        lcd.print("Crepuscolare Off");
+        lcd.print("Crepuscolare On");
         break;
       case 5:
-        lcd.print("CTRL Tensione");
+        lcd.print("Crepuscolare Off");
         break;
       case 6:
+        lcd.print("CTRL Tensione");
+        break;
+      case 7:
         lcd.print("System LOG");
         break;
     }
     MenuOld = Menu;
   }
 
-  //--------EDIT MODE-------------
+  //--------Set Data Time--------------
+
   if ((Menu == 1) && (EditMode)) {
     if (InitEdit == 0) {
       lcd.clear();
@@ -801,17 +864,28 @@ Exit:
     }
     if (InitEdit) {
       if ( EditState == 1) Cursor += 1;
-      if (Cursor != OldCursor)
-      {
+      if (Cursor != OldCursor) {
         if (Cursor > 5)      Cursor = 0;
         OldCursor = Cursor;
         switch (Cursor) {
-          case 0: lcd.setCursor(4, 0); break;
-          case 1: lcd.setCursor(7, 0); break;
-          case 2: lcd.setCursor(10, 0); break;
-          case 3: lcd.setCursor(4, 1); break;
-          case 4: lcd.setCursor(7, 1); break;
-          case 5: lcd.setCursor(10, 1); break;
+          case 0:
+            lcd.setCursor(4, 0);
+            break;
+          case 1:
+            lcd.setCursor(7, 0);
+            break;
+          case 2:
+            lcd.setCursor(10, 0);
+            break;
+          case 3:
+            lcd.setCursor(4, 1);
+            break;
+          case 4:
+            lcd.setCursor(7, 1);
+            break;
+          case 5:
+            lcd.setCursor(10, 1);
+            break;
         }
       }
       if (UpButtState) {
@@ -910,7 +984,77 @@ Exit:
       }
     }
   }
-  if ((Menu == 2) && (EditMode)) { //Menu MotorSpeed
+
+  //--------Mechanical Time--------------
+  if ((Menu == 2) && (EditMode)) {
+    if (InitEdit == 0) {
+      SetDataTime[0] = HMec;
+      SetDataTime[1] = MMec;
+      sprintf(buffer,  "%02d:%02d", SetDataTime[0], SetDataTime[1]);
+      lcd.setCursor(1, 1);
+      lcd.print( buffer );
+      lcd.blink();
+      InitEdit = 1;
+    }
+    if (InitEdit) {
+      if ( EditState == 1) Cursor += 1;
+      if (Cursor != OldCursor) {
+        if (Cursor > 1)      Cursor = 0;
+        OldCursor = Cursor;
+        switch (Cursor) {
+          case 0:
+            lcd.setCursor(1, 1);
+            break;
+          case 1:
+            lcd.setCursor(4, 1);
+        }
+      }
+      if (UpButtState) {
+        //buffer[10] = "";
+        switch (Cursor) {
+          case 0:
+            lcd.setCursor(1, 1);
+            if (SetDataTime[0] < 23) SetDataTime[0] += 1;
+            sprintf(buffer,  "%02d" , SetDataTime[0]);
+            lcd.print(buffer);
+            lcd.setCursor(1, 1);
+            break;
+          case 1:
+            lcd.setCursor(4, 1);
+            if (SetDataTime[1] < 59) SetDataTime[1] += 1;
+            sprintf(buffer,  "%02d" , SetDataTime[1]);
+            lcd.print(buffer);
+            lcd.setCursor(4, 1);
+            break;
+        }
+      }
+      if (DwButtState) {
+        //buffer[10] = "";
+        switch (Cursor) {
+          case 0:
+            lcd.setCursor(1, 1);
+            if (SetDataTime[1] > 0) SetDataTime[1] -= 1;
+            sprintf(buffer,  "%02d" , SetDataTime[1]);
+            lcd.print(buffer);
+            lcd.setCursor(1, 1);
+            break;
+          case 1:
+            lcd.setCursor(4, 1);
+            if (SetDataTime[1] > 0) SetDataTime[1] -= 1;
+            sprintf(buffer,  "%02d" , SetDataTime[1]);
+            lcd.print(buffer);
+            lcd.setCursor(4, 1);
+            break;
+
+        }
+      }
+
+    }
+
+  }// End Mechanical Time
+
+  //--------Set Motor Speed------------
+  if ((Menu == 3) && (EditMode)) {
     if (InitEdit == 0) {
       //lcd.clear();
       SetData = MotorSpeed;
@@ -931,7 +1075,9 @@ Exit:
     }
   }// End Motor Speed
 
-  if ((Menu == 3) && (EditMode)) { //Twilight Relays On
+  //--------Set Twilight ON------------
+
+  if ((Menu == 4) && (EditMode)) {
     if (InitEdit == 0) {
       //lcd.clear();
       SetData = TwlR_On;
@@ -950,9 +1096,11 @@ Exit:
         lcd.print( SetData, DEC);
       }
     }
-  }// End Twilight Relays On
+  }
 
-  if ((Menu == 4) && (EditMode)) { //Twilight Relays Off
+  //--------Set Twilight OFF-----------
+
+  if ((Menu == 5) && (EditMode)) {
     if (InitEdit == 0) {
       //lcd.clear();
       SetData = TwlR_Off;
@@ -971,9 +1119,11 @@ Exit:
         lcd.print( SetData, DEC);
       }
     }
-  }// End Twilight Relays On
+  }
 
-  if ((Menu == 5) && (EditMode)) {      //Vsens Value
+  //--------Voltage limi Value---------
+
+  if ((Menu == 6) && (EditMode)) {
     if (InitEdit == 0) {
       SetData = VSensLim;
       lcd.setCursor(3, 1);
@@ -1006,7 +1156,10 @@ Exit:
       }
     }
   }
-  if ((Menu == 6) && (EditMode)) { //Log page
+
+  //--------------Log Page-------------
+
+  if ((Menu == 7) && (EditMode)) {
     if (InitEdit == 0) {
       lcd.clear();
       SetData = (EpromAdd - 10);
@@ -1036,4 +1189,6 @@ Exit:
     }
   }
 }
+
+
 
