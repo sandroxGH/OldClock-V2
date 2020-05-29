@@ -36,7 +36,7 @@
 
 //-----------Timer Setting-------------
 #define EepromWipe	0 		// init procedure for new eeprom
-#define EepromRead	0   	// all the eprom data is print on serial port in startup
+#define EepromRead	1   	// all the eprom data is print on serial port in startup
 #define SystemLog	  1		//Enable of System Log on external eprom
 #define FDebug			0		// Enable Fast Debug
 #define SDebug			0		// Eneble Time Debug
@@ -442,7 +442,7 @@ void loop() {
 
   //------------Time Debug Mng---------
 
-  if ((millis()-TimeDeb)>TDebug) {
+  if (((millis()-TimeDeb)>TDebug)&& SDebug) {
     TimeDeb = millis();
     Debug();
   }
@@ -503,11 +503,6 @@ void loop() {
       PattAllOn = 0;
     }
   }
-
-  
-
-    
-
   //------------I2c Bus Test-----------
 
   if (((millis()-TimeI2cTest)> TI2cTest) && (!AllReady)) {
