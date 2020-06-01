@@ -36,7 +36,7 @@
 
 //-----------Timer Setting-------------
 #define EepromWipe	0 		// init procedure for new eeprom
-#define EepromRead	1   	// all the eprom data is print on serial port in startup
+#define EepromRead	0   	// all the eprom data is print on serial port in startup
 #define SystemLog	  1		//Enable of System Log on external eprom
 #define FDebug			0		// Enable Fast Debug
 #define SDebug			0		// Eneble Time Debug
@@ -74,9 +74,10 @@
 
 
 //---------LCD I2C Addres and pinout---
-#define EEPROM_ADDR		0x57 ///0x50
-#define LCD_I2C_ADDR	0x20 //0x27
-#define DS1307_ADDR		0x68
+#define EEPROM_ADDR		0x57 ///0x50  
+#define LCD_I2C_ADDR	0x27
+#define DS3231_ADDR		0x68
+//#define DS1307_ADDR		0x68
 #define BACKLIGHT_PIN	3
 #define En_pin			2
 #define Rw_pin			1
@@ -90,8 +91,8 @@
 //----------Arduino PinOut-------------
 #define EdButt		2
 #define UpButt		3
-#define DwButt		5 //4
-#define FaseCTRL	4 //5
+#define DwButt		4
+#define FaseCTRL	5
 #define LDR       A0
 #define VSens			A1
 #define Light			11
@@ -205,7 +206,7 @@ void setup() {
   lcd.createChar(6, CharV);
   lcd.createChar(7, Char10);
   Serial.begin(115200);
-  Serial.println("OdlClockV2.1");
+  Serial.println("OdlClockV2.2");
   lcd.setBacklightPin(BACKLIGHT_PIN, POSITIVE);
   lcd.setBacklight(HIGH);
   lcd.setCursor(4 , 0);
@@ -346,10 +347,10 @@ byte BcdToDec(byte val) {
 }
 
 boolean GetDateTime(uint8_t *Array, char Len) {
-  Wire.beginTransmission(DS1307_ADDR);			// init the transmission starting from the address 0x00
+  Wire.beginTransmission(DS3231_ADDR);			// init the transmission starting from the address 0x00
   Wire.write(0x00);
-  Wire.endTransmission();                // requires 7 bytes to the devicese with the address indicated the DS1307 uses 56 bits to record the date / time
-  Wire.requestFrom(DS1307_ADDR, 7);
+  Wire.endTransmission();                // requires 7 bytes to the devicese with the address indicated the DS3231 uses 56 bits to record the date / time
+  Wire.requestFrom(DS3231_ADDR, 7);
   if (Wire.available())
   {
     *(Array + 6) = BcdToDec(Wire.read());
@@ -365,7 +366,7 @@ boolean GetDateTime(uint8_t *Array, char Len) {
 }
 
 void SendDateTime(uint8_t *Array) {
-  Wire.beginTransmission(DS1307_ADDR); 					// the first byte sent establishes the initial register on which to write
+  Wire.beginTransmission(DS3231_ADDR); 					// the first byte sent establishes the initial register on which to write
   Wire.write(0x00);
   for ( i = 7; i != 0; i--) {
     Wire.write(DecToBcd(*(Array + i - 1)));
@@ -520,7 +521,7 @@ void loop() {
       goto Out;
     }
     LcdAll = 0;
-    Wire.beginTransmission(DS1307_ADDR);
+    Wire.beginTransmission(DS3231_ADDR);
     if (Wire.endTransmission()) {
       if (FDebug) Serial.println("RTC Bus Fault");
       if (!RtcAll ) {
