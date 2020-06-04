@@ -39,7 +39,7 @@
 #define EepromRead	0   	// all the eprom data is print on serial port in startup
 #define SystemLog	  1		//Enable of System Log on external eprom
 #define FDebug			0		// Enable Fast Debug
-#define SDebug			0		// Eneble Time Debug
+#define SDebug			1		// Eneble Time Debug
 #define TDebug			1000	// Time of debug 
 #define TLcd			  1000	// Time Lcd Refresh 
 #define TTwl			  2000	// Time for LDR value calculation
@@ -74,8 +74,8 @@
 
 
 //---------LCD I2C Addres and pinout---
-#define EEPROM_ADDR		0x57 ///0x50  
-#define LCD_I2C_ADDR	0x27
+#define EEPROM_ADDR		0x50 ///0x57  
+#define LCD_I2C_ADDR	0x20 //0x27
 #define DS3231_ADDR		0x68
 //#define DS1307_ADDR		0x68
 #define BACKLIGHT_PIN	3
@@ -91,8 +91,8 @@
 //----------Arduino PinOut-------------
 #define EdButt		2
 #define UpButt		3
-#define DwButt		4
-#define FaseCTRL	5
+#define DwButt		5  //4
+#define FaseCTRL	4 //5
 #define LDR       A0
 #define VSens			A1
 #define Light			11
@@ -113,7 +113,7 @@
 #define M_EpromAdd		7
 #define M_EpromAdd1		8
 #define M_VSensLim		9     // 12V Sensor limit under this limit save the parameter and disable motor movement 
-
+#define M_SolarTime   10
 
 
 unsigned long TimeLcd  	= 0;  		//Update LCD Time
@@ -131,7 +131,8 @@ unsigned long TimeI2cTest = 0;
 unsigned long TimeSvTShDw = 0;
 unsigned long TimePulseUp	= 0;
 unsigned long TimePulseDw  = 0;
-unsigned long TMotMan =0;
+unsigned long TMotMgmt =0;
+unsigned long TMotEn =0;
 
 byte DataTime[7];
 byte SetDataTime[7];
@@ -161,6 +162,12 @@ char Cursor, OldCursor;
 char Sample;
 char UpButtState, DwButtState;
 char SerCount;
+char SolarTime;
+const char* DW[] = {"Lun", "Mar", "Mer","Gio", "Ven", "Sab", "Dom"}; //Day of week
+const char* Adj[] = {"Leg","Sol","Non"}; //Summer Standard time auto Adjust
+
+
+
 
 byte Char10[8] = {
   B00010, B00100, B01000, B10000, B01011, B11011, B01011, B01011
@@ -226,6 +233,8 @@ void setup() {
   EpromAdd += 10;
   digitalWrite(MotDir , EEPROM.read(M_MDir));
   VSensLim = EEPROM.read(M_VSensLim);
+  SolarTime= EEPROM.read(M_SolarTime);
+
   // EpromAdd = 0;
   if (EpromAdd < LowEpromLim) EpromAdd = LowEpromLim;
   if (EepromWipe) {
@@ -248,7 +257,7 @@ void setup() {
     }
   }
 
-  if (! GetDateTime(&DataTime[0], 6)) {
+  if (! GetDateTime(&DataTime[0])) {
     if (FDebug) Serial.println("RTC is NOT running!");
     Pattern = Pattern_All3;
     for (i = 0; i <= 6; i++) AllBuff[i] = 99;
@@ -265,7 +274,7 @@ void setup() {
   }
   //TimeMotMan =  millis() + 60000;
    TimeMotMan = millis();
-   TMotMan = 61000-(DataTime[6] * 1000); //To sync motor revolution with RTC
+   TMotMgmt = 61000-(DataTime[6] * 1000); //To sync motor revolution with RTC
   //HMec = DataTime[4];
   //MMec = DataTime[5];
 }
@@ -304,10 +313,12 @@ void Debug() {
   //  Serial.print("VSensValOld   ");
   //  Serial.println(VSensValOld, DEC);
   //  Serial.println(analogRead(VSens));
-    Serial.print("TimePulseUp ");
-    Serial.println(TimePulseUp, DEC);
-    Serial.print("TimeUpButt ");
-    Serial.println(TimeUpButt, DEC);
+  //  Serial.print("TimePulseUp ");
+  //  Serial.println(TimePulseUp, DEC);
+  //  Serial.print("TimeUpButt ");
+  //  Serial.println(TimeUpButt, DEC);
+  Serial.print("DataTime 3 ");
+  Serial.println(DataTime[3], DEC);
 
 }
 
@@ -346,7 +357,7 @@ byte BcdToDec(byte val) {
   return (((val >> 4) * 10) + (val & 0b1111) );
 }
 
-boolean GetDateTime(uint8_t *Array, char Len) {
+boolean GetDateTime(uint8_t *Array) {
   Wire.beginTransmission(DS3231_ADDR);			// init the transmission starting from the address 0x00
   Wire.write(0x00);
   Wire.endTransmission();                // requires 7 bytes to the devicese with the address indicated the DS3231 uses 56 bits to record the date / time
@@ -458,6 +469,7 @@ void loop() {
     if (EpromAdd >= HiEpromLim) EpromAdd = LowEpromLim;
     if (EpromAdd < LowEpromLim) EpromAdd = LowEpromLim;
     AllReady = 0;
+    AllBuff[7]= AllBuff[8]= AllBuff[9]=0;
   }
 
   //------------Shutdown & Restart-----
@@ -572,13 +584,29 @@ Out:
 //    TimeSvTShDw = millis();
 //    if (FDebug) Serial.println("Salvato");
 //  }
+  //----------Summer/Standard Time adj-------
+  if((DataTime[1]==3)&&(DataTime[2]>=25)&&(DataTime[3]==7)&&(DataTime[4]==2)&&(SolarTime!=2)){
+    GetDateTime(&DataTime[0]);
+    DataTime[4]+=1;
+    SendDateTime(&DataTime[0]);
+    SolarTime=0;
+    EEPROM.write(M_SolarTime, 0);
+  }
+
+  if((DataTime[1]==10)&&(DataTime[2]>=25)&&(DataTime[3]==7)&&(DataTime[4]==3)&&(SolarTime!=1)&&(SolarTime!=2)){
+    GetDateTime(&DataTime[0]);
+    DataTime[4]-=1;
+    SendDateTime(&DataTime[0]);
+    SolarTime=1;
+    EEPROM.write(M_SolarTime, 1);
+  }
 
   //------------Motor Management-------
-  if (Menu == 2 && InitEdit) goto EndMotMan;     // Jump to allow the mechanical time adjustment
+  if (Menu == 2 && InitEdit) goto EndMotMgmt;     // Jump to allow the mechanical time adjustment
 
-  if (((millis()-TimeMotMan)>TMotMan) && !SvTShDw) {
+  if (((millis()-TimeMotMan)>TMotMgmt) && !SvTShDw) {
     TimeMotMan = millis();
-    TMotMan =  61000-(DataTime[6] * 1000);
+    TMotMgmt =  61000-(DataTime[6] * 1000);
 
     SumMinMec = (MMec + (HMec * 60));
     SumMinRtc = (DataTime[5] + (DataTime[4] * 60));
@@ -593,10 +621,10 @@ Out:
         Pattern = Pattern_All1;
         MClWaAll = 1;
       }
-      goto EndMotMan;
+      goto EndMotMgmt;
     }
 
-    if ((HMec <= 23) && (MMec <= 59) && (HMec > 0) && digitalRead(FaseCTRL)) {
+    if ((HMec <= 23) && (HMec > 0) && (MMec <= 59)  && digitalRead(FaseCTRL)) {
       if (FDebug) Serial.println("Attesa in Fase");
       HMec = DataTime[4];
       MMec = DataTime[5];
@@ -609,7 +637,7 @@ Out:
         Pattern = Pattern_All1;
         MClAdAll = 1;
       }
-      goto EndMotMan;
+      goto EndMotMgmt;
     }
     if (!HMec && !MMec && !digitalRead(FaseCTRL) && !MoveMot) {
       if (FDebug) Serial.println("Recupero Ritardo");
@@ -617,7 +645,8 @@ Out:
       digitalWrite (MotEn , HIGH);
       TimeMotEn = millis();
       TimeMotMan = millis(); 
-      TMotMan = (MotEnable * 30);
+      TMotEn = (MotEnable* 15);
+      TMotMgmt = (MotEnable * 40);
       if (!MClDlAll) {
         if (FDebug) Serial.println("MCL_DELAY");   //A6
         for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
@@ -627,23 +656,24 @@ Out:
         Pattern = Pattern_All1;
         MClDlAll = 1;
       }
-      goto EndMotMan;
+      goto EndMotMgmt;
     }
     if (((HMec != DataTime[4]) || (MMec != DataTime[5])) && (MoveMot == 0)) {
       if (FDebug) Serial.println("Recupero");
       TimeMotEn = millis();
       TimeMotMan = millis();
-      TMotMan= (MotEnable * 30);   //20
+      TMotEn= (MotEnable * 15); 
+      TMotMgmt= (MotEnable * 40);   //20
       digitalWrite (MotEn , HIGH);
       MoveMot = 1;
       MClAdAll = MClDlAll = MClWaAll = 0;
     }
   }
 
-EndMotMan:
+EndMotMgmt:
 
   if ((MoveMot == 1) && !SvTShDw) {
-    if ((millis()-TimeMotEn)>(MotEn*15)) {
+    if ((millis()-TimeMotEn)>TMotEn) {
       if (FDebug) Serial.println("motore");
       digitalWrite(MotEn, LOW);
       delay(10);
@@ -659,7 +689,7 @@ EndMotMan:
       MoveMot = 0;
       if (HMec == 23 && MMec > 55 ) {
         TimeMotMan = millis();
-        TMotMan = 1500;  //Fixed Time for trust face detect 
+        TMotMgmt = 2000;  //Fixed Time for trust face detect 
       }
     }
   }
@@ -684,19 +714,26 @@ EndMotMan:
 
   if (((millis()-TimeLcd)>TLcd) && (Menu == 0)) {
     TimeLcd = millis();
-    GetDateTime(&DataTime[0], 6);
+    GetDateTime(&DataTime[0]);
     lcd.clear();
-    sprintf(buffer,  "%02d/%02d/%d", DataTime[2], DataTime[1], DataTime[0]);
+    sprintf(buffer,  "%02d/%02d/%02d", DataTime[2], DataTime[1], DataTime[0]);
     lcd.setCursor(1, 0);
     lcd.print( buffer );
+    lcd.setCursor(10, 0);
+    lcd.print(DW[DataTime[3]-1]);
+    lcd.setCursor(15, 0);
+    if(SolarTime!=2){
+      if(SolarTime==0)lcd.print("*");  //* mean the time use in the summer ! time use in the winter 
+      else lcd.print("!");
+    } 
     //buffer[10] = 0;
-    sprintf(buffer,  "%02d:%02d:%02d", DataTime[4], DataTime[5], DataTime[6]);
+    sprintf(buffer,  "%02d:%02d:%02d LS%d", DataTime[4], DataTime[5], DataTime[6],TwlVal);
     lcd.setCursor(1, 1);
     lcd.print( buffer );
-    lcd.setCursor(11, 0);
-    lcd.print("LSens");
-    lcd.setCursor(11, 1);
-    lcd.print(TwlVal, DEC);
+    // lcd.setCursor(11, 0);
+    // lcd.print("LSens");
+    // lcd.setCursor(11, 1);
+    // lcd.print(TwlVal, DEC);
   }
 
   //---------Menu Mng Edit Mode---------
@@ -722,6 +759,8 @@ EndMotMan:
     if (Menu == 1) {
       if (CtrlData(SetDataTime[2], SetDataTime[1], SetDataTime[0])) {  //Coherent date control
         SendDateTime(&SetDataTime[0]);
+        SolarTime=SetData;
+        EEPROM.write(M_SolarTime, SolarTime);
         goto SaveOk;
       }
       else goto SaveFault;
@@ -811,7 +850,7 @@ Exit:
     //if (FDebug) Serial.println(Menu, DEC);
     switch (Menu) {
       case 1:
-        lcd.print("Imposta data ora RTC");
+        lcd.print("Imposta data ora");
         break;
       case 2:
         lcd.print("Ora Meccanica");
@@ -841,148 +880,187 @@ Exit:
     if (InitEdit == 0) {
       lcd.clear();
       for (i = 7; i != 0; i--) SetDataTime[i - 1] = DataTime[i - 1];
+      SetData = SolarTime;
       sprintf(buffer,  "%02d/%02d/%d", SetDataTime[2], SetDataTime[1], SetDataTime[0]);
-      lcd.setCursor(4, 0);
+      lcd.setCursor(1, 0);
       lcd.print( buffer );
+      lcd.setCursor(10, 0);
+      lcd.print(Adj[SetData]);       
       //buffer[10] = "";
       sprintf(buffer,  "%02d:%02d:%02d", SetDataTime[4], SetDataTime[5], SetDataTime[6]);
-      lcd.setCursor(4, 1);
+      lcd.setCursor(1, 1);
       lcd.print( buffer );
+      lcd.setCursor(10, 1);
+      lcd.print(DW[(SetDataTime[3]-1)]);
       Cursor = 0;
-      lcd.setCursor(4, 0);
+      lcd.setCursor(1, 0);
       lcd.blink();
       InitEdit = 1;
     }
     if (InitEdit) {
       if ( EditState == 1) Cursor += 1;
       if (Cursor != OldCursor) {
-        if (Cursor > 5)      Cursor = 0;
+        if (Cursor > 7)      Cursor = 0;
         OldCursor = Cursor;
         switch (Cursor) {
           case 0:
-            lcd.setCursor(4, 0);
+            lcd.setCursor(2, 0);
             break;
           case 1:
-            lcd.setCursor(7, 0);
+            lcd.setCursor(5, 0);
             break;
           case 2:
-            lcd.setCursor(10, 0);
+            lcd.setCursor(8, 0);
             break;
           case 3:
-            lcd.setCursor(4, 1);
+            lcd.setCursor(12, 0);
             break;
           case 4:
-            lcd.setCursor(7, 1);
+            lcd.setCursor(2, 1);
             break;
           case 5:
-            lcd.setCursor(10, 1);
+            lcd.setCursor(5, 1);
             break;
+          case 6:
+            lcd.setCursor(8, 1);
+            break;
+          case 7:
+            lcd.setCursor(12, 1);
+            break;  
         }
       }
       if (UpButtState) {
         //buffer[10] = "";
         switch (Cursor) {
           case 0:
-            lcd.setCursor(4, 0);
+            lcd.setCursor(1, 0);
             if (SetDataTime[2] <= 31) SetDataTime[2] += 1;
             if (SetDataTime[2] > 31) SetDataTime[2] = 0;
             sprintf(buffer,  "%02d" , SetDataTime[2]);
             lcd.print(buffer);
-            lcd.setCursor(4, 0);
+            lcd.setCursor(2, 0);
             break;
           case 1:
-            lcd.setCursor(7, 0);
+            lcd.setCursor(4, 0);
             if (SetDataTime[1] <= 12) SetDataTime[1] += 1;
             if (SetDataTime[1] > 12) SetDataTime[1] = 0;
             sprintf(buffer,  "%02d" , SetDataTime[1]);
             lcd.print(buffer);
-            lcd.setCursor(7, 0);
+            lcd.setCursor(5, 0);
             break;
           case 2:
-            lcd.setCursor(10, 0);
+            lcd.setCursor(7, 0);
             if (SetDataTime[0] <= 98)SetDataTime[0] += 1;
             if (SetDataTime[0] > 98)SetDataTime[0] = 0;
             sprintf(buffer,  "%02d" , SetDataTime[0]);
             lcd.print(buffer);
-            lcd.setCursor(10, 0);
+            lcd.setCursor(8, 0);
             break;
           case 3:
-            lcd.setCursor(4, 1);
+            lcd.setCursor(10, 0);
+            if (SetData <=2)SetData += 1;
+            if (SetData >2 )SetData = 0;
+            lcd.print(Adj[SetData]); 
+            lcd.setCursor(12, 0);
+            break;
+          case 4:
+            lcd.setCursor(1, 1);
             if (SetDataTime[4] <= 23)SetDataTime[4] += 1;
             if (SetDataTime[4] > 23)SetDataTime[4] = 0;
             sprintf(buffer,  "%02d" , SetDataTime[4]);
             lcd.print(buffer);
-            lcd.setCursor(4, 1);
+            lcd.setCursor(2, 1);
             break;
-          case 4:
-            lcd.setCursor(7, 1);
+          case 5:
+            lcd.setCursor(4, 1);
             if (SetDataTime[5] <= 59)SetDataTime[5] += 1;
             if (SetDataTime[5] > 59)SetDataTime[5] = 0;
             sprintf(buffer,  "%02d" , SetDataTime[5]);
             lcd.print(buffer);
-            lcd.setCursor(7, 1);
+            lcd.setCursor(5, 1);
             break;
-          case 5:
-            lcd.setCursor(10, 1);
+          case 6:
+            lcd.setCursor(7, 1);
             if (SetDataTime[6] <= 59)SetDataTime[6] += 1;
             if (SetDataTime[6] > 59)SetDataTime[6] = 0;
             sprintf(buffer,  "%02d" , SetDataTime[6]);
             lcd.print(buffer);
-            lcd.setCursor(10, 1);
+            lcd.setCursor(8, 1);
             break;
+          case 7:
+            lcd.setCursor(10, 1);
+            if (SetDataTime[3] <= 7)SetDataTime[3] += 1;
+            if (SetDataTime[3] > 7)SetDataTime[3] = 1;
+            lcd.print(DW[SetDataTime[3]-1]);
+            lcd.setCursor(12, 1);
+          break;  
         }
       }
       if (DwButtState) {
         //buffer[10] = "";
         switch (Cursor) {
           case 0:
-            lcd.setCursor(4, 0);
+            lcd.setCursor(1, 0);
             if (SetDataTime[2] >= 0) SetDataTime[2] -= 1;
             if (SetDataTime[2] > 31) SetDataTime[2] = 31;
             sprintf(buffer,  "%02d" , SetDataTime[2]);
             lcd.print(buffer);
-            lcd.setCursor(4, 0);
+            lcd.setCursor(2, 0);
             break;
           case 1:
-            lcd.setCursor(7, 0);
+            lcd.setCursor(4, 0);
             if (SetDataTime[1] >= 0) SetDataTime[1] -= 1;
             if (SetDataTime[1] > 12) SetDataTime[1] = 12;
             sprintf(buffer,  "%02d" , SetDataTime[1]);
             lcd.print(buffer);
-            lcd.setCursor(7, 0);
+            lcd.setCursor(5, 0);
             break;
           case 2:
-            lcd.setCursor(10, 0);
+            lcd.setCursor(7, 0);
             if (SetDataTime[0] >= 0) SetDataTime[0] -= 1;
             if (SetDataTime[0] > 98) SetDataTime[0] = 98;
             sprintf(buffer,  "%02d" , SetDataTime[0]);
             lcd.print(buffer);
-            lcd.setCursor(10, 0);
+            lcd.setCursor(8, 0);
             break;
           case 3:
-            lcd.setCursor(4, 1);
+            lcd.setCursor(10, 0);
+            if (SetData >=0)SetData -= 1;
+            if (SetData >2)SetData = 2;
+            lcd.print(Adj[SetData]);
+            lcd.setCursor(12, 0);
+            break;  
+          case 4:
+            lcd.setCursor(1, 1);
             if (SetDataTime[4] >= 0) SetDataTime[4] -= 1;
             if (SetDataTime[4] > 23)SetDataTime[4] = 23;
             sprintf(buffer,  "%02d" , SetDataTime[4]);
             lcd.print(buffer);
-            lcd.setCursor(4, 1);
+            lcd.setCursor(2, 1);
             break;
-          case 4:
-            lcd.setCursor(7, 1);
+          case 5:
+            lcd.setCursor(4, 1);
             if (SetDataTime[5] >= 0)  SetDataTime[5] -= 1;
             if (SetDataTime[5] > 59)SetDataTime[5] = 59;
             sprintf(buffer,  "%02d" , SetDataTime[5]);
             lcd.print(buffer);
-            lcd.setCursor(7, 1);
+            lcd.setCursor(5, 1);
             break;
-          case 5:
-            lcd.setCursor(10, 1);
+          case 6:
+            lcd.setCursor(7, 1);
             if (SetDataTime[6] >= 0) SetDataTime[6] -= 1;
             if (SetDataTime[6] > 59)SetDataTime[6] = 59;
             sprintf(buffer,  "%02d" , SetDataTime[6]);
             lcd.print(buffer);
-            lcd.setCursor(10, 1);
+            lcd.setCursor(8, 1);
             break;
+          case 7:
+            lcd.setCursor(10, 1);
+            if (SetDataTime[3] >=1)SetDataTime[3] -= 1;
+            if (SetDataTime[3] <1)SetDataTime[3] = 7;
+            lcd.print(DW[SetDataTime[3]-1]);
+            lcd.setCursor(12, 1);
+          break;  
         }
       }
     }
