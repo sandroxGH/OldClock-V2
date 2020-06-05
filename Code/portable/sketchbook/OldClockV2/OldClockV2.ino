@@ -16,17 +16,19 @@
 #define EVENT         'E'
 #define ALARM         'A'
 #define MESSAGE       'M'
-#define START_UP      1
-#define CHANGE_DATE		2
-#define DATA_FAULT		3
-#define MCL_WAITING		4
-#define MCL_ADVANCE		5
-#define MCL_DELAY     6
-#define LCD_BUS_FAULT	7
+#define START_UP        1
+#define CHANGE_DATE		  2
+#define DATA_FAULT		  3
+#define MCL_WAITING		  4
+#define MCL_ADVANCE		  5
+#define MCL_DELAY       6
+#define LCD_BUS_FAULT	  7
 #define RTC_BUSS_FAULT	8
 #define EPR_BUSS_FAULT	9
-#define RTC_NOT_RUN		10
-#define SAVE_SHUTDOWN	11
+#define RTC_NOT_RUN		  10
+#define SAVE_SHUTDOWN	  11
+#define SUMMER_TIME     12
+#define STANDARD_TIME   13
 
 //-------Alarm Led Blink Pattern-------
 #define Pattern_No_All	2500
@@ -74,8 +76,8 @@
 
 
 //---------LCD I2C Addres and pinout---
-#define EEPROM_ADDR		0x50 ///0x57  
-#define LCD_I2C_ADDR	0x20 //0x27
+#define EEPROM_ADDR		0x57 ///0x50  simulator
+#define LCD_I2C_ADDR	0x27 //0x20  simulator
 #define DS3231_ADDR		0x68
 //#define DS1307_ADDR		0x68
 #define BACKLIGHT_PIN	3
@@ -91,8 +93,8 @@
 //----------Arduino PinOut-------------
 #define EdButt		2
 #define UpButt		3
-#define DwButt		5  //4
-#define FaseCTRL	4 //5
+#define DwButt		4  //5 simulator
+#define FaseCTRL	5  //4 simulator
 #define LDR       A0
 #define VSens			A1
 #define Light			11
@@ -219,7 +221,7 @@ void setup() {
   lcd.setCursor(4 , 0);
   lcd.print("Msystem");
   lcd.setCursor(1, 1);
-  lcd.print("Old Clock V2.1");
+  lcd.print("Old Clock V2.2");
   delay(1500);
   lcd.clear();
   lcd.setBacklight(LOW);
@@ -591,7 +593,13 @@ Out:
     SendDateTime(&DataTime[0]);
     SolarTime=0;
     EEPROM.write(M_SolarTime, 0);
-  }
+    if (FDebug) Serial.println("Summer time");   // E12
+    for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
+    AllBuff[7] = EVENT;
+    AllBuff[8] = SUMMER_TIME;
+    AllReady = 1;
+    Pattern = Pattern_All1;
+   }
 
   if((DataTime[1]==10)&&(DataTime[2]>=25)&&(DataTime[3]==7)&&(DataTime[4]==3)&&(SolarTime!=1)&&(SolarTime!=2)){
     GetDateTime(&DataTime[0]);
@@ -599,6 +607,12 @@ Out:
     SendDateTime(&DataTime[0]);
     SolarTime=1;
     EEPROM.write(M_SolarTime, 1);
+    if (FDebug) Serial.println("Standard time");   // E13
+    for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
+    AllBuff[7] = EVENT;
+    AllBuff[8] = STANDARD_TIME;
+    AllReady = 1;
+    Pattern = Pattern_All1;
   }
 
   //------------Motor Management-------
