@@ -13,22 +13,22 @@
 #include <avr/wdt.h>
 
 //---------Alarm table-----------------
-#define EVENT         'E'
-#define ALARM         'A'
-#define MESSAGE       'M'
-#define START_UP        1
-#define CHANGE_DATE		  2
-#define DATA_FAULT		  3
-#define MCL_WAITING		  4
-#define MCL_ADVANCE		  5
-#define MCL_DELAY       6
-#define LCD_BUS_FAULT	  7
+#define EVENT			'E'
+#define ALARM			'A'
+#define MESSAGE			'M'
+#define START_UP		1
+#define CHANGE_DATE		2
+#define DATA_FAULT		3
+#define MCL_WAITING		4
+#define MCL_ADVANCE		5
+#define MCL_DELAY		6
+#define LCD_BUS_FAULT	7
 #define RTC_BUSS_FAULT	8
 #define EPR_BUSS_FAULT	9
-#define RTC_NOT_RUN		  10
-#define SAVE_SHUTDOWN	  11
-#define SUMMER_TIME     12
-#define STANDARD_TIME   13
+#define RTC_NOT_RUN		10
+#define SAVE_SHUTDOWN	11
+#define SUMMER_TIME		12
+#define STANDARD_TIME	13
 
 //-------Alarm Led Blink Pattern-------
 #define Pattern_No_All	2500
@@ -37,23 +37,23 @@
 #define Pattern_All3    200
 
 //-----------Timer Setting-------------
-#define EepromWipe	0 		// init procedure for new eeprom
-#define EepromRead	0   	// all the eprom data is print on serial port in startup
-#define SystemLog	  1		//Enable of System Log on external eprom
+#define EepromWipe		0 		// init procedure for new eeprom
+#define EepromRead		0   	// all the eprom data is print on serial port in startup
+#define SystemLog		1		// Enable of System Log on external eprom
 #define FDebug			0		// Enable Fast Debug
-#define SDebug			1		// Eneble Time Debug
+#define SDebug			0		// Eneble Time Debug
 #define TDebug			1000	// Time of debug 
-#define TLcd			  1000	// Time Lcd Refresh 
-#define TTwl			  2000	// Time for LDR value calculation
-//#define TMotMan			61000	// Time 
+#define TLcd			1000	// Time Lcd Refresh 
+#define TTwl			2000	// Time for LDR value calculation
+//#define TMotMan		61000	// Time 
 #define TPatAll			30000	// Time of led alarm indication 
 #define TExitMenu		30000	// Time for auto-exit menu 
 #define TI2cTest		30000	// Time for bus test 
-#define TSvTShDw		500	// Time to Save and Shutdown , power off the PerPwr enable
+#define TSvTShDw		500		// Time to Save and Shutdown , power off the PerPwr enable
 
 #define SelPatt			50		// Selection minimal time 
 #define EntPatt			1500	// Enter
-#define TPulButt    100   // Time for auto toogles button  
+#define TPulButt		100		// Time for auto toogles button  
 
 #define MenuPage		7		// Number of page in Menu 
 #define SampleN			10		// Sample number for LDR Value 
@@ -62,14 +62,14 @@
 
 #define UpLimMS			250		// Motor Speed limit
 #define DwLimMS			12
-#define UpLimTwlOn	250		// Twilight Sensor limit ON
-#define DwLimTwlOn	10
-#define	UpLimTwlOff	250		// Twilight Sensor limit OFF
-#define DwLimTwlOff	10
-#define UpLimVSens  140   	// Twilight Sensor limit OFF
-#define DwLimVSens  50
-#define HiEpromLim	4020	// Message limit for system log %10
-#define LowEpromLim	0
+#define UpLimTwlOn		250		// Twilight Sensor limit ON
+#define DwLimTwlOn		10
+#define	UpLimTwlOff		250		// Twilight Sensor limit OFF
+#define DwLimTwlOff		10
+#define UpLimVSens		140   // Limit for auto power off
+#define DwLimVSens		50
+#define HiEpromLim		4020	// Message limit for system log %10
+#define LowEpromLim		0
 #define EepromPageSize	32
 #define SerAllMes		2
 
@@ -79,7 +79,7 @@
 #define EEPROM_ADDR		0x57 ///0x50  simulator
 #define LCD_I2C_ADDR	0x27 //0x20  simulator
 #define DS3231_ADDR		0x68
-//#define DS1307_ADDR		0x68
+//#define DS1307_ADDR	0x68
 #define BACKLIGHT_PIN	3
 #define En_pin			2
 #define Rw_pin			1
@@ -95,13 +95,13 @@
 #define UpButt		3
 #define DwButt		4  //5 simulator
 #define FaseCTRL	5  //4 simulator
-#define LDR       A0
-#define VSens			A1
-#define Light			11
-#define LedV			9
-#define LedR			13
+#define LDR			A0
+#define VSens		A1
+#define Light		11
+#define LedV		9
+#define LedR		13
 #define MotDir		6
-#define MotEn			7
+#define MotEn		7
 #define PerPwr		8
 
 
@@ -109,21 +109,21 @@
 #define M_MotSpeed		1
 #define M_TwlR_On	  	2						//Twilight relays threshold On
 #define M_TwlR_Off		3						//Twilight relays threshold Off
-#define M_HMec			  4
-#define M_MMec			  5
-#define M_MDir			  6
+#define M_HMec			4
+#define M_MMec			5
+#define M_MDir			6
 #define M_EpromAdd		7
 #define M_EpromAdd1		8
 #define M_VSensLim		9     // 12V Sensor limit under this limit save the parameter and disable motor movement 
-#define M_SolarTime   10
+#define M_SolarTime		10
 
 
-unsigned long TimeLcd  	= 0;  		//Update LCD Time
-unsigned long TimeDeb 	= 0;  		//Debug Time
-unsigned long TimeTwl  	= 0;		//
+unsigned long TimeLcd = 0;  		//Update LCD Time
+unsigned long TimeDeb = 0;  		//Debug Time
+unsigned long TimeTwl = 0;		//
 unsigned long TimeMotMan = 0;		// Time to update the Mechanical time
-unsigned long TimeMotEn 	= 0;
-unsigned long TimeBlink 	= 0;
+unsigned long TimeMotEn = 0;
+unsigned long TimeBlink = 0;
 unsigned long TimeEdButt = 0;
 unsigned long TimeUpButt	= 0;
 unsigned long TimeDwButt = 0;
@@ -156,6 +156,7 @@ int VSensLim;
 int j,i;
 int SumMinMec = 0;
 int SumMinRtc = 0;
+int MinOld =0;
 
 char EditState = 0;
 char Menu = 0;
@@ -166,7 +167,7 @@ char UpButtState, DwButtState;
 char SerCount;
 char SolarTime;
 const char* DW[] = {"Lun", "Mar", "Mer","Gio", "Ven", "Sab", "Dom"}; //Day of week
-const char* Adj[] = {"Leg","Sol","Non"}; //Summer Standard time auto Adjust
+const char* Adj[] = {"Leg","Sol","xxx"}; //Summer Standard time auto Adjust
 
 
 
@@ -191,6 +192,7 @@ bool EditMode  = 0;
 bool InitEdit  = 0;
 bool SvTShDw  = 0;
 bool PulseMem = 0;
+bool LcdClear =0;
 
 LiquidCrystal_I2C lcd(LCD_I2C_ADDR, En_pin, Rw_pin, Rs_pin, D4_pin, D5_pin, D6_pin, D7_pin);
 
@@ -274,12 +276,10 @@ void setup() {
     AllReady = 1;
     Pattern = Pattern_No_All;
   }
-  //TimeMotMan =  millis() + 60000;
+  
    TimeMotMan = millis();
-   TMotMgmt = 61000-(DataTime[6] * 1000); //To sync motor revolution with RTC
-  //HMec = DataTime[4];
-  //MMec = DataTime[5];
-}
+   TMotMgmt=5000;
+ }
 
 void Debug() {
   digitalWrite(LedV, !(digitalRead(LedV)));
@@ -455,14 +455,12 @@ void EEpromReadBuff( int deviceaddress, int eeaddress, byte* buffer, int length 
 void loop() {
 
   //------------Time Debug Mng---------
-
   if (((millis()-TimeDeb)>TDebug)&& SDebug) {
     TimeDeb = millis();
     Debug();
-  }
-
+   }
+  
   //------------Alarm Log--------------
-
   if ((AllReady) && (SystemLog)) {
     EEpromWriteBuff(EEPROM_ADDR, EpromAdd , &AllBuff[0], 10);
     EEPROM.write(M_EpromAdd, EpromAdd);
@@ -472,10 +470,9 @@ void loop() {
     if (EpromAdd < LowEpromLim) EpromAdd = LowEpromLim;
     AllReady = 0;
     AllBuff[7]= AllBuff[8]= AllBuff[9]=0;
-  }
+   }
 
   //------------Shutdown & Restart-----
-
   if ((SvTShDw) && ((millis()-TimeSvTShDw)>TSvTShDw) && digitalRead(PerPwr)) {
     digitalWrite(PerPwr, LOW);
     if (FDebug) Serial.println("Per PWR Off");
@@ -571,21 +568,21 @@ Out:
 
   VSensVal = ((analogRead(VSens) * 10) / 68); //61);
   //VSensVal = 120;
-//  if ((VSensVal < VSensLim) && !SvTShDw) {
-//    EEPROM.write(M_MMec , MMec);
-//    EEPROM.write(M_HMec , HMec);
-//    EEPROM.write(M_MDir , digitalRead(MotDir));
-//    EEPROM.write(M_EpromAdd, EpromAdd);
-//    EEPROM.write(M_EpromAdd1, (EpromAdd >> 8));
-//    for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
-//    AllBuff[7] = ALARM;
-//    AllBuff[8] = SAVE_SHUTDOWN;
-//    AllReady = 1;
-//    Pattern = Pattern_All2;
-//    SvTShDw = 1;                        //Save To ShutDown
-//    TimeSvTShDw = millis();
-//    if (FDebug) Serial.println("Salvato");
-//  }
+  if ((VSensVal < VSensLim) && !SvTShDw) {
+    EEPROM.write(M_MMec , MMec);
+    EEPROM.write(M_HMec , HMec);
+    EEPROM.write(M_MDir , digitalRead(MotDir));
+    EEPROM.write(M_EpromAdd, EpromAdd);
+    EEPROM.write(M_EpromAdd1, (EpromAdd >> 8));
+    for (i = 0; i <= 6; i++) AllBuff[i] = DataTime[i];
+    AllBuff[7] = ALARM;
+    AllBuff[8] = SAVE_SHUTDOWN;
+    AllReady = 1;
+    Pattern = Pattern_All2;
+    SvTShDw = 1;                        //Save To ShutDown
+    TimeSvTShDw = millis();
+    if (FDebug) Serial.println("Salvato");
+   }
   //----------Summer/Standard Time adj-------
   if((DataTime[1]==3)&&(DataTime[2]>=25)&&(DataTime[3]==7)&&(DataTime[4]==2)&&(SolarTime!=2)){
     GetDateTime(&DataTime[0]);
@@ -613,15 +610,15 @@ Out:
     AllBuff[8] = STANDARD_TIME;
     AllReady = 1;
     Pattern = Pattern_All1;
-  }
+   }
 
   //------------Motor Management-------
   if (Menu == 2 && InitEdit) goto EndMotMgmt;     // Jump to allow the mechanical time adjustment
 
   if (((millis()-TimeMotMan)>TMotMgmt) && !SvTShDw) {
     TimeMotMan = millis();
-    TMotMgmt =  61000-(DataTime[6] * 1000);
-
+    TMotMgmt =  60500-(DataTime[6] * 1000);
+    GetDateTime(&DataTime[0]);
     SumMinMec = (MMec + (HMec * 60));
     SumMinRtc = (DataTime[5] + (DataTime[4] * 60));
 
@@ -638,7 +635,7 @@ Out:
       goto EndMotMgmt;
     }
 
-    if ((HMec <= 23) && (HMec > 0) && (MMec <= 59)  && digitalRead(FaseCTRL)) {
+    if ((HMec <= 23) && (HMec > 2) && (MMec <= 59)  && digitalRead(FaseCTRL)) {
       if (FDebug) Serial.println("Attesa in Fase");
       HMec = DataTime[4];
       MMec = DataTime[5];
@@ -682,7 +679,7 @@ Out:
       MoveMot = 1;
       MClAdAll = MClDlAll = MClWaAll = 0;
     }
-  }
+   }
 
 EndMotMgmt:
 
@@ -729,7 +726,8 @@ EndMotMgmt:
   if (((millis()-TimeLcd)>TLcd) && (Menu == 0)) {
     TimeLcd = millis();
     GetDateTime(&DataTime[0]);
-    lcd.clear();
+    if(LcdClear)lcd.clear();
+    LcdClear=0;
     sprintf(buffer,  "%02d/%02d/%02d", DataTime[2], DataTime[1], DataTime[0]);
     lcd.setCursor(1, 0);
     lcd.print( buffer );
@@ -740,16 +738,10 @@ EndMotMgmt:
       if(SolarTime==0)lcd.print("*");  //* mean the time use in the summer ! time use in the winter 
       else lcd.print("!");
     } 
-    //buffer[10] = 0;
     sprintf(buffer,  "%02d:%02d:%02d LS%d", DataTime[4], DataTime[5], DataTime[6],TwlVal);
     lcd.setCursor(1, 1);
     lcd.print( buffer );
-    // lcd.setCursor(11, 0);
-    // lcd.print("LSens");
-    // lcd.setCursor(11, 1);
-    // lcd.print(TwlVal, DEC);
-  }
-
+    }
   //---------Menu Mng Edit Mode---------
 
   EditState = ButtonState(EdButt, &TimeEdButt);
@@ -824,6 +816,7 @@ EndMotMgmt:
 SaveOk:
     lcd.setCursor(14, 1);
     lcd.print("Ok");
+    LcdClear=1;
     if (FDebug) Serial.print("OK");
     //delay(1000);
     TimeLcd = millis();       //delay the LCD refresh
@@ -855,7 +848,7 @@ Exit:
     InitEdit = 0;
     Cursor = 0;
     lcd.noBlink();
-  }
+    }
   if ((EditState == 2) && Menu && (EditMode == 0)) EditMode = 1;
   if (Menu > MenuPage)Menu = 0;
   if ((Menu != MenuOld) && (EditMode == 0)) {       //Menu page update
@@ -1110,7 +1103,7 @@ Exit:
         switch (Cursor) {
           case 0:
             lcd.setCursor(1, 1);
-            if (SetDataTime[0] <= 24) SetDataTime[0] += 1;
+            if (SetDataTime[0] <= 23) SetDataTime[0] += 1;
             if (SetDataTime[0] == 24) SetDataTime[0] = 0;
             sprintf(buffer,  "%02d" , SetDataTime[0]);
             lcd.print(buffer);
@@ -1132,7 +1125,7 @@ Exit:
           case 0:
             lcd.setCursor(1, 1);
             if (SetDataTime[0] >= 0) SetDataTime[0] -= 1;
-            if (SetDataTime[0] > 24) SetDataTime[0] = 24;
+            if (SetDataTime[0] > 23) SetDataTime[0] = 23;
             sprintf(buffer,  "%02d" , SetDataTime[0]);
             lcd.print(buffer);
             lcd.setCursor(1, 1);

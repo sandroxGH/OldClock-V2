@@ -13,7 +13,7 @@
 13	D10*		
 14	D11* 		Led light 
 15	D12  	
-16	D13		Red Led Fro program State 
+16	D13		Red Led program State 
 17	3V3		
 18	AREF
 19	A7		
