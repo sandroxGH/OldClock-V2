@@ -96,7 +96,7 @@
 #define DwButt		4  //5 simulator
 #define FaseCTRL	5  //4 simulator
 #define LDR			A0
-#define VSens		A1
+#define VSens		A1  //Vin-Vout ratio 0.33
 #define Light		11
 #define LedV		9
 #define LedR		13
